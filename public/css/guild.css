@@ -1,0 +1,111 @@
+@font-face {
+  font-family: "OETZTYP";
+  src: url("../images/OETZTYP_.TTF") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "OETZTYP", sans-serif !important;
+  background-color: #19003f;
+  color: #eee;
+  margin: 0;
+  padding: 20px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h1 {
+  color: #ddb6e6;
+  margin-bottom: 5px;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  background-color: rgba(173, 216, 230, 0.15);
+  border-radius: 8px;
+}
+
+.info:nth-child(even) {
+  background-color: rgba(173, 216, 230, 0.1);
+}
+
+.label {
+  font-weight: bold;
+  color: #ffffff;
+  min-width: 120px;
+}
+
+.value {
+  text-align: right;
+  color: #ffd700;
+  word-break: break-word;
+}
+
+#badgePreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto 16px;
+  width: 80px;
+  height: 80px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  color: #ffd700;
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.owner-link {
+  color: #ffd700;
+  text-decoration: none;
+}
+
+.owner-link:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: #ff6b6b;
+  text-align: center;
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 14px;
+  }
+
+  .info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .value {
+    text-align: left;
+  }
+}

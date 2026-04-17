@@ -1,5 +1,7 @@
-const clanNameEl = document.getElementById("clanName");
-const guildErrorEl = document.getElementById("guildError");
+function getQueryParam(param) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(param);
+}
 
 function setText(id, value) {
   const el = document.getElementById(id);
@@ -8,8 +10,32 @@ function setText(id, value) {
     value === null || value === undefined || value === "" ? "-" : String(value);
 }
 
+function createBadgePreview(name) {
+  const initials = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return initials || "CL";
+}
+
+function makeOwnerLink(ownerId, ownerName) {
+  if (!ownerId) {
+    return ownerName || "-";
+  }
+
+  const safeName = escapeHtml(ownerName || ownerId);
+  return `<a class="owner-link" href="player.html?id=${encodeURIComponent(ownerId)}">${safeName}</a>`;
+}
+
 async function fetchGuildInfo() {
-  const guildID = queryParam("id");
+  const guildID = getQueryParam("id");
+  const clanNameEl = document.getElementById("clanName");
+  const guildErrorEl = document.getElementById("guildError");
+
   if (!guildID) {
     clanNameEl.textContent = "No Guild ID provided";
     return;
@@ -41,23 +67,23 @@ async function fetchGuildInfo() {
     setText("country", guild.country || "-");
 
     const ownerEl = document.getElementById("owner");
-    const ownerName = escapeHtml(guild.ownerName || guild.owner || "-");
     if (ownerEl) {
-      if (guild.owner) {
-        ownerEl.innerHTML = `<a class="mini-link" href="player.html?id=${encodeURIComponent(guild.owner)}">${ownerName}</a>`;
-      } else {
-        ownerEl.textContent = ownerName;
-      }
+      ownerEl.innerHTML = makeOwnerLink(
+        guild.owner,
+        guild.ownerName || guild.owner,
+      );
     }
 
     const badgeEl = document.getElementById("badgePreview");
     if (badgeEl) {
-      badgeEl.textContent = guildName;
+      badgeEl.textContent = createBadgePreview(guildName);
     }
   } catch (error) {
     clanNameEl.textContent = "Failed to load guild info";
-    guildErrorEl.textContent = error.message;
-    guildErrorEl.hidden = false;
+    if (guildErrorEl) {
+      guildErrorEl.textContent = error.message;
+      guildErrorEl.hidden = false;
+    }
   }
 }
 

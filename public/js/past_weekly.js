@@ -44,24 +44,21 @@ function applyWeekLinks(week) {
 function renderRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     pastBody.innerHTML =
-      "<tr><td colspan='5'>No weekly data found for this week.</td></tr>";
+      "<tr><td colspan='3'>No weekly data found for this week.</td></tr>";
     return;
   }
 
   pastBody.innerHTML = players
     .map((player) => {
       const rank = Number(player.rank) || 0;
-      const playerID = escapeHtml(player.playerID || "Unknown");
       const username = escapeHtml(player.username || "-");
       const medallions = formatNumber(player.medallions);
 
       return `
       <tr>
         <td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
-        <td>${playerID}</td>
-        <td>${username}</td>
+        <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
         <td>${medallions}</td>
-        <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">Open</a></td>
       </tr>
     `;
     })
@@ -98,7 +95,7 @@ async function loadWeekly(forceRefresh = false) {
     pastError.textContent = error.message;
     pastError.hidden = false;
     pastBody.innerHTML =
-      "<tr><td colspan='5'>Failed to load weekly leaderboard.</td></tr>";
+      "<tr><td colspan='3'>Failed to load weekly leaderboard.</td></tr>";
   }
 }
 

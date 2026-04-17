@@ -195,24 +195,21 @@ function rankClass(rank) {
 function renderRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     leaderboardBody.innerHTML =
-      "<tr><td colspan='5'>No leaderboard entries found.</td></tr>";
+      "<tr><td colspan='3'>No leaderboard entries found.</td></tr>";
     return;
   }
 
   leaderboardBody.innerHTML = players
     .map((player) => {
       const rank = Number(player.rank) || 0;
-      const playerID = escapeHtml(player.playerID || "Unknown");
       const username = escapeHtml(player.username || "-");
       const medallions = formatNumber(player.medallions);
 
       return `
 			<tr>
 				<td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
-				<td>${playerID}</td>
-				<td>${username}</td>
+        <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
 				<td>${medallions}</td>
-				<td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">Open</a></td>
 			</tr>
 		`;
     })
@@ -222,24 +219,21 @@ function renderRows(players) {
 function renderPrestigeRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     prestigeLeaderboardBody.innerHTML =
-      "<tr><td colspan='5'>No prestige leaderboard entries found.</td></tr>";
+      "<tr><td colspan='3'>No prestige leaderboard entries found.</td></tr>";
     return;
   }
 
   prestigeLeaderboardBody.innerHTML = players
     .map((player) => {
       const rank = Number(player.rank) || 0;
-      const playerID = escapeHtml(player.playerID || "Unknown");
       const username = escapeHtml(player.username || "-");
       const prestige = formatNumber(player.prestige);
 
       return `
 			<tr>
 				<td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
-				<td>${playerID}</td>
-				<td>${username}</td>
+        <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
 				<td><span class="prestige-score">${prestige}</span></td>
-				<td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">Open</a></td>
 			</tr>
 		`;
     })
@@ -268,7 +262,7 @@ async function loadLeaderboard(forceRefresh = false) {
     leaderboardMeta.textContent = `${regionLabel} | Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
   } catch (error) {
     leaderboardBody.innerHTML =
-      "<tr><td colspan='5'>Failed to load leaderboard.</td></tr>";
+      "<tr><td colspan='3'>Failed to load leaderboard.</td></tr>";
     leaderboardMeta.textContent = "";
     leaderboardError.textContent = error.message;
     leaderboardError.hidden = false;
@@ -297,7 +291,7 @@ async function loadPrestigeLeaderboard(forceRefresh = false) {
     prestigeLeaderboardMeta.textContent = `Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
   } catch (error) {
     prestigeLeaderboardBody.innerHTML =
-      "<tr><td colspan='5'>Failed to load prestige leaderboard.</td></tr>";
+      "<tr><td colspan='3'>Failed to load prestige leaderboard.</td></tr>";
     prestigeLeaderboardMeta.textContent = "";
     prestigeLeaderboardError.textContent = error.message;
     prestigeLeaderboardError.hidden = false;

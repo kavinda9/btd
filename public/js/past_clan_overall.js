@@ -94,7 +94,7 @@ function renderRows(clans) {
       const name = escapeHtml(clan.name || "Loading guild...");
       const medallions = formatNumber(clan.medallions);
       const guildHref = clanID
-        ? `guild.html?id=${encodeURIComponent(clanID)}`
+        ? `player.html?id=${encodeURIComponent(clanID)}`
         : null;
       const nameCell = guildHref
         ? `<a class="mini-link js-past-guild-link" data-guild-id="${escapeHtml(clanID)}" href="${guildHref}">${name}</a>`

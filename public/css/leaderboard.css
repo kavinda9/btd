@@ -1,3 +1,15 @@
+@font-face {
+  font-family: "OETZTYP";
+  src: url("../images/OETZTYP_.TTF") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.container,
+.container * {
+  font-family: "OETZTYP", sans-serif !important;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

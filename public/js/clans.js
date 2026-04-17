@@ -65,10 +65,10 @@ function renderClanRows(clans, targetClanID = null) {
       const name = escapeHtml(clan.name || "Loading guild...");
       const medallions = formatNumber(clan.medallions);
       const guildHref = clanID
-        ? `guild.html?id=${encodeURIComponent(clanID)}`
+        ? `player.html?id=${encodeURIComponent(clanID)}`
         : null;
       const nameCell = guildHref
-        ? `<a class="mini-link js-guild-link" data-guild-id="${escapeHtml(clanID)}" data-has-name="${hasName ? "1" : "0"}" href="${guildHref}">${name}</a>`
+        ? `<a class="mini-link js-guild-link" data-guild-id="${escapeHtml(clanID)}" data-has-name="${hasName ? "1" : "0"}" href="player.html?id=${encodeURIComponent(clanID)}">${name}</a>`
         : name;
       const highlighted =
         targetClanID && clanID === targetClanID
