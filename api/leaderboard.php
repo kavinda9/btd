@@ -54,24 +54,42 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 // ----------------------------------------------------------
 $players = [];
 
+// NK may wrap the real payload inside a JSON string at `data`
+$payload = $decoded;
+
+if (isset($decoded['data']) && is_string($decoded['data'])) {
+    $inner = json_decode($decoded['data'], true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($inner)) {
+        $payload = $inner;
+    }
+} elseif (isset($decoded['data']) && is_array($decoded['data'])) {
+    $payload = $decoded['data'];
+}
+
 // Try common NK leaderboard structures
 $entries = [];
+$rankBase = 0;
 
-if (isset($decoded['scores'])) {
-    $entries = $decoded['scores'];
-} elseif (isset($decoded['leaderboard'])) {
-    $entries = $decoded['leaderboard'];
-} elseif (isset($decoded['data'])) {
-    $entries = $decoded['data'];
-} elseif (is_array($decoded)) {
-    $entries = $decoded;
+if (isset($payload['scores']['equal']) && is_array($payload['scores']['equal'])) {
+    $entries = $payload['scores']['equal'];
+    $rankBase = isset($payload['scores']['above']) && is_array($payload['scores']['above'])
+        ? count($payload['scores']['above'])
+        : 0;
+} elseif (isset($payload['scores']) && is_array($payload['scores'])) {
+    $entries = $payload['scores'];
+} elseif (isset($payload['leaderboard']) && is_array($payload['leaderboard'])) {
+    $entries = $payload['leaderboard'];
+} elseif (isset($payload['data']) && is_array($payload['data'])) {
+    $entries = $payload['data'];
+} elseif (is_array($payload)) {
+    $entries = $payload;
 }
 
 foreach ($entries as $index => $entry) {
-    $rank       = $index + 1;
+    $rank       = $rankBase + $index + 1;
     $playerID   = $entry['userID']   ?? $entry['playerID'] ?? $entry['id']   ?? null;
     $medallions = $entry['score']    ?? $entry['medallions'] ?? $entry['value'] ?? 0;
-    $username   = $entry['username'] ?? $entry['name']       ?? null;
+    $username   = $entry['username'] ?? $entry['name'] ?? $entry['metadata'] ?? null;
 
     if (!$playerID) continue;
 

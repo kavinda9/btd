@@ -62,23 +62,37 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     send_error('Profile data is malformed: ' . json_last_error_msg(), 502);
 }
 
+// NK profile responses can arrive in different wrappers.
+$profileData = $decoded;
+
+if (isset($decoded['data']) && is_string($decoded['data'])) {
+    $inner = json_decode($decoded['data'], true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($inner)) {
+        $profileData = $inner;
+    }
+}
+
+if (isset($profileData['']) && is_array($profileData[''])) {
+    $profileData = $profileData[''];
+}
+
 // ----------------------------------------------------------
 // 8. NORMALISE PROFILE DATA
 //    Extract known fields — gracefully handle missing ones
 // ----------------------------------------------------------
 
 // -- Basic info --
-$username    = $decoded['displayName']  ?? $decoded['username']   ?? $decoded['name']     ?? 'Unknown';
-$avatarID    = $decoded['avatarURL']    ?? $decoded['avatar']     ?? null;
-$level       = $decoded['xpLevel']      ?? $decoded['level']      ?? null;
-$xp          = $decoded['xp']           ?? null;
+$username    = $profileData['displayName'] ?? $profileData['username'] ?? $profileData['name'] ?? $profileData['Name'] ?? 'Unknown';
+$avatarID    = $profileData['avatarURL']   ?? $profileData['avatar']   ?? $profileData['Avatar'] ?? null;
+$level       = $profileData['xpLevel']     ?? $profileData['level']    ?? $profileData['Level']  ?? null;
+$xp          = $profileData['xp']          ?? $profileData['XP']       ?? $profileData['Battlescore'] ?? null;
 
 // -- Battle stats --
-$stats       = $decoded['battleStats']  ?? $decoded['stats']      ?? $decoded['gameStats'] ?? [];
-$wins        = $stats['wins']           ?? $stats['totalWins']    ?? null;
-$losses      = $stats['losses']         ?? $stats['totalLosses']  ?? null;
-$medallions  = $decoded['medallions']   ?? $stats['medallions']   ?? null;
-$rank        = $decoded['rank']         ?? $stats['rank']         ?? null;
+$stats       = $profileData['battleStats'] ?? $profileData['stats'] ?? $profileData['gameStats'] ?? [];
+$wins        = $stats['wins'] ?? $stats['totalWins'] ?? $profileData['Wins'] ?? null;
+$losses      = $stats['losses'] ?? $stats['totalLosses'] ?? $profileData['Losses'] ?? null;
+$medallions  = $profileData['medallions'] ?? $stats['medallions'] ?? $profileData['MedallionsCurrent'] ?? $profileData['MedallionWinsWeekly'] ?? null;
+$rank        = $profileData['rank'] ?? $stats['rank'] ?? null;
 
 // -- Win rate calculation --
 $winRate = null;
@@ -88,11 +102,11 @@ if ($wins !== null && $losses !== null) {
 }
 
 // -- Clan info --
-$clan        = $decoded['clanName']     ?? $decoded['clan']['name'] ?? null;
-$clanID      = $decoded['clanID']       ?? $decoded['clan']['id']   ?? null;
+$clan        = $profileData['clanName'] ?? ($profileData['clan']['name'] ?? null);
+$clanID      = $profileData['clanID']   ?? ($profileData['clan']['id'] ?? null) ?? ($profileData['GuildID'] ?? null);
 
 // -- Towers / loadout (if available) --
-$towers      = $decoded['towers']       ?? $decoded['loadout']     ?? null;
+$towers      = $profileData['towers']   ?? $profileData['loadout'] ?? null;
 
 // ----------------------------------------------------------
 // 9. SEND CLEAN RESPONSE
@@ -117,5 +131,5 @@ echo json_encode([
         ],
         'towers'     => $towers,
     ],
-    'raw'       => DEV_MODE ? $decoded : null,
+    'raw'       => DEV_MODE ? $profileData : null,
 ]);
