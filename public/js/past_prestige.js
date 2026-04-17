@@ -1,6 +1,5 @@
 const weekInput = document.getElementById("weekInput");
 const loadWeekBtn = document.getElementById("loadWeekBtn");
-const refreshWeekBtn = document.getElementById("refreshWeekBtn");
 const openPastWeekly = document.getElementById("openPastWeekly");
 const openPastPrestige = document.getElementById("openPastPrestige");
 const openPastClans = document.getElementById("openPastClans");
@@ -141,10 +140,6 @@ async function loadPrestige(forceRefresh = false) {
 
 if (loadWeekBtn) {
   loadWeekBtn.addEventListener("click", () => loadPrestige(false));
-}
-
-if (refreshWeekBtn) {
-  refreshWeekBtn.addEventListener("click", () => loadPrestige(true));
 }
 
 if (weekInput) {

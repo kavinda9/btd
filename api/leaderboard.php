@@ -55,15 +55,32 @@ function get_week_rotation_name(?int $weekNumber): ?string {
         return null;
     }
 
-    $rotation = [
+    $newRotation = [
         'R3 Speed Bananza ZOMG',
         'Speed Bananza ZOMG',
         'Speed Bananza Boosts Only',
         'Speed With Fire ZOMG',
     ];
 
-    $index = ($weekNumber - 1) % count($rotation);
-    return $rotation[$index];
+    $oldRotation = [
+        'Speed With Fire Cards',
+        'Speed With Fire',
+        'Speed Bananza',
+        'Speed Mega Boost Cards',
+    ];
+
+    if ($weekNumber >= 423) {
+        $index = ($weekNumber - 1) % count($newRotation);
+        return $newRotation[$index];
+    }
+
+    $oldAnchorWeek = 419;
+    $index = ($weekNumber - $oldAnchorWeek) % count($oldRotation);
+    if ($index < 0) {
+        $index += count($oldRotation);
+    }
+
+    return $oldRotation[$index];
 }
 
 // ----------------------------------------------------------

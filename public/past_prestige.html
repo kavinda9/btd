@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/main.css" />
-    <link rel="stylesheet" href="css/leaderboard.css?v=20260417q" />
+    <link rel="stylesheet" href="css/leaderboard.css?v=20260417v" />
   </head>
   <body>
     <div class="bg-orb orb-1"></div>
@@ -39,46 +39,47 @@
     </header>
 
     <main class="container">
-      <section class="page-head reveal">
+      <section class="page-head reveal week-head">
         <div>
           <p class="eyebrow">Historical Data</p>
           <h1>Past Prestige Leaderboard</h1>
         </div>
         <div class="page-actions week-actions">
-          <label for="weekInput">Week</label>
-          <input
-            id="weekInput"
-            class="week-input"
-            type="number"
-            min="1"
-            step="1"
-            value="569"
-            aria-label="Week number"
-          />
-          <button class="btn btn-primary" id="loadWeekBtn" type="button">
-            Load Week
-          </button>
-          <button class="btn btn-ghost" id="refreshWeekBtn" type="button">
-            Force Refresh
-          </button>
-          <a
-            class="btn btn-ghost"
-            id="openPastWeekly"
-            href="past_weekly.html?week=569"
-            >Weekly</a
-          >
-          <a
-            class="btn btn-primary"
-            id="openPastPrestige"
-            href="past_prestige.html?week=569"
-            >Prestige</a
-          >
-          <a
-            class="btn btn-ghost"
-            id="openPastClans"
-            href="past_clan_overall.html?week=569"
-            >Clan Overall</a
-          >
+          <div class="week-row">
+            <label for="weekInput">Week</label>
+            <input
+              id="weekInput"
+              class="week-input"
+              type="number"
+              min="1"
+              step="1"
+              value="569"
+              aria-label="Week number"
+            />
+            <button class="btn btn-primary" id="loadWeekBtn" type="button">
+              Load Week
+            </button>
+          </div>
+          <div class="week-row">
+            <a
+              class="btn btn-ghost"
+              id="openPastWeekly"
+              href="past_weekly.html?week=569"
+              >Weekly</a
+            >
+            <a
+              class="btn btn-primary"
+              id="openPastPrestige"
+              href="past_prestige.html?week=569"
+              >Prestige</a
+            >
+            <a
+              class="btn btn-ghost"
+              id="openPastClans"
+              href="past_clan_overall.html?week=569"
+              >Clan Overall</a
+            >
+          </div>
         </div>
       </section>
 
@@ -114,6 +115,6 @@
 
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/past_prestige.js?v=20260417f"></script>
+    <script src="js/past_prestige.js?v=20260417g"></script>
   </body>
 </html>

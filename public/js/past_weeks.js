@@ -1,6 +1,5 @@
 const weekInput = document.getElementById("weekInput");
 const loadWeekBtn = document.getElementById("loadWeekBtn");
-const refreshWeekBtn = document.getElementById("refreshWeekBtn");
 const pastWeekMeta = document.getElementById("pastWeekMeta");
 const pastWeekError = document.getElementById("pastWeekError");
 const selectedWeekText = document.getElementById("selectedWeekText");
@@ -56,12 +55,6 @@ function applyWeekTargets() {
 
 if (loadWeekBtn) {
   loadWeekBtn.addEventListener("click", () => {
-    applyWeekTargets();
-  });
-}
-
-if (refreshWeekBtn) {
-  refreshWeekBtn.addEventListener("click", () => {
     applyWeekTargets();
   });
 }

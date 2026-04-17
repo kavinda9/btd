@@ -9,6 +9,7 @@ const prestigeSection = document.getElementById("prestigeSection");
 const regionModal = document.getElementById("regionModal");
 const regionModalClose = document.getElementById("regionModalClose");
 const regionFlagsGrid = document.getElementById("regionFlagsGrid");
+const leaderboardWeekInfo = document.getElementById("leaderboardWeekInfo");
 const prestigeLeaderboardBody = document.getElementById(
   "prestigeLeaderboardBody",
 );
@@ -26,12 +27,20 @@ const PRESTIGE_RESET_BASE = Date.UTC(2017, 1, 15, 10, 0, 0);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const BIWEEK_MS = 14 * 24 * 60 * 60 * 1000;
 const LIVE_WEEK_NUMBER = 569;
-const WEEKLY_MODE_ROTATION = [
+const WEEKLY_NEW_MODE_ROTATION = [
   "R3 Speed Bananza ZOMG",
   "Speed Bananza ZOMG",
   "Speed Bananza Boosts Only",
   "Speed With Fire ZOMG",
 ];
+const WEEKLY_OLD_MODE_ROTATION = [
+  "Speed With Fire Cards",
+  "Speed With Fire",
+  "Speed Bananza",
+  "Speed Mega Boost Cards",
+];
+const OLD_ROTATION_ANCHOR_WEEK = 419;
+const NEW_ROTATION_START_WEEK = 423;
 const MONTH_NAMES = [
   "January",
   "February",
@@ -46,6 +55,16 @@ const MONTH_NAMES = [
   "November",
   "December",
 ];
+const WEEKLY_ARENA_IMAGE_FILES = {
+  r3speedbananzazomg: "4.png",
+  speedbananzazomg: "1.png",
+  speedbananzaboostsonly: "2.png",
+  speedwithfirezomg: "5.png",
+  speedwithfirecards: "3.png",
+  speedwithfire: "5.png",
+  speedbananza: "1.png",
+  speedmegaboostcards: "6.png",
+};
 
 const COUNTRY_OPTIONS = [
   { code: "AR", flag: "🇦🇷" },
@@ -118,14 +137,56 @@ function padTimerValue(value) {
   return String(Math.max(0, value)).padStart(2, "0");
 }
 
+function normalizeModeName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 function getWeeklyModeName(weekNumber) {
   const week = Number(weekNumber);
   if (!Number.isFinite(week) || week <= 0) {
     return "";
   }
 
-  const index = (week - 1) % WEEKLY_MODE_ROTATION.length;
-  return WEEKLY_MODE_ROTATION[index] || "";
+  if (week >= NEW_ROTATION_START_WEEK) {
+    const index = (week - 1) % WEEKLY_NEW_MODE_ROTATION.length;
+    return WEEKLY_NEW_MODE_ROTATION[index] || "";
+  }
+
+  const size = WEEKLY_OLD_MODE_ROTATION.length;
+  const index = ((week - OLD_ROTATION_ANCHOR_WEEK) % size + size) % size;
+  return WEEKLY_OLD_MODE_ROTATION[index] || "";
+}
+
+function getWeeklyArenaImageFile(weekNumber, weekName) {
+  const resolvedName = weekName || getWeeklyModeName(weekNumber);
+  const key = normalizeModeName(resolvedName);
+  return WEEKLY_ARENA_IMAGE_FILES[key] || "";
+}
+
+function renderWeekInfoCard(weekNumber, weekName, currentWeekEnd) {
+  const period = getWeekPeriodByNumber(weekNumber, currentWeekEnd);
+  const modeName = weekName || getWeeklyModeName(weekNumber) || "-";
+  const dateRange = period
+    ? formatWeeklyRange(period.start, period.end)
+    : "";
+  const imageFile = getWeeklyArenaImageFile(weekNumber, modeName);
+  const imageSrc = imageFile
+    ? `images/arenas/${encodeURIComponent(imageFile)}`
+    : "";
+
+  return `
+    ${imageSrc ? `
+      <span class="week-info-image-wrap">
+        <img class="week-info-image" src="${imageSrc}" alt="${escapeHtml(modeName)} arena" loading="lazy" decoding="async" />
+      </span>
+    ` : ""}
+    <span class="week-info-copy">
+      ${dateRange ? `<span class="week-info-date">${escapeHtml(dateRange)}</span>` : ""}
+      <span class="week-info-mode">( ${escapeHtml(modeName)} )</span>
+    </span>
+  `;
 }
 
 function formatWeeklyRange(startDate, endDate) {
@@ -200,19 +261,26 @@ function updateLeaderboardTimer() {
     currentWeeklyRotationLabel &&
     Number.isFinite(Number(currentWeeklyNumber));
 
+  if (leaderboardWeekInfo) {
+    leaderboardWeekInfo.hidden = !showWeeklyLabel;
+  }
+
   if (!showWeeklyLabel) {
     leaderboardTimer.textContent = `Ends in: ${formatTimerCountdown(endTime)}`;
+    if (leaderboardWeekInfo) {
+      leaderboardWeekInfo.innerHTML = "";
+    }
     return;
   }
 
-  const period = getWeekPeriodByNumber(currentWeeklyNumber, endTime);
-  if (!period) {
-    leaderboardTimer.textContent = `Ends in: ${formatTimerCountdown(endTime)}\n( ${currentWeeklyRotationLabel} )`;
-    return;
+  leaderboardTimer.textContent = `Ends in: ${formatTimerCountdown(endTime)}`;
+  if (leaderboardWeekInfo) {
+    leaderboardWeekInfo.innerHTML = renderWeekInfoCard(
+      currentWeeklyNumber,
+      currentWeeklyRotationLabel,
+      endTime,
+    );
   }
-
-  const dateRange = formatWeeklyRange(period.start, period.end);
-  leaderboardTimer.textContent = `Ends in: ${formatTimerCountdown(endTime)}\n${dateRange}\n( ${currentWeeklyRotationLabel} )`;
 }
 
 setInterval(updateLeaderboardTimer, 1000);
