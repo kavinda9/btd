@@ -41,6 +41,10 @@ function parse_nk_entries_prestige(string $raw): array {
     ];
 }
 
+function normalize_prestige_score($rawScore): int {
+    return intdiv((int) ($rawScore ?? 0), 10);
+}
+
 function derive_week_to_season_offset_prestige(): int {
     $weekRef = null;
     $seasonRef = null;
@@ -107,7 +111,7 @@ foreach ($parsed['entries'] as $index => $entry) {
     $players[] = [
         'rank' => (int) $parsed['rankBase'] + $index + 1,
         'playerID' => $playerID,
-        'prestige' => (int) ($entry['score'] ?? $entry['value'] ?? 0),
+        'prestige' => normalize_prestige_score($entry['score'] ?? $entry['value'] ?? 0),
         'username' => $entry['metadata'] ?? $entry['username'] ?? $entry['name'] ?? null,
     ];
 }

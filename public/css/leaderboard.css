@@ -10,6 +10,12 @@
   font-family: "OETZTYP", sans-serif !important;
 }
 
+.page-head h1 {
+  font-family: "Bebas Neue", sans-serif !important;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

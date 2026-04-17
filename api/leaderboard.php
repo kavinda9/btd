@@ -50,6 +50,10 @@ function parse_nk_leaderboard_entries(string $raw): array {
     ];
 }
 
+function normalize_prestige_score($rawScore): int {
+    return intdiv((int) ($rawScore ?? 0), 10);
+}
+
 function get_week_rotation_name(?int $weekNumber): ?string {
     if (!$weekNumber || $weekNumber < 1) {
         return null;
@@ -168,7 +172,7 @@ if (is_array($parsedPrestige['entries'])) {
         }
 
         $prestigeByPlayer[$id] = [
-            'score' => (int) ($entry['score'] ?? $entry['value'] ?? 0),
+            'score' => normalize_prestige_score($entry['score'] ?? $entry['value'] ?? 0),
             'rank'  => (int) $parsedPrestige['rankBase'] + $index + 1,
             'name'  => $entry['metadata'] ?? $entry['username'] ?? $entry['name'] ?? null,
         ];

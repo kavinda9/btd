@@ -60,6 +60,10 @@ function find_ranked_score(array $parsed, string $targetId): array {
     ];
 }
 
+function normalize_prestige_score($rawScore): int {
+    return intdiv((int) ($rawScore ?? 0), 10);
+}
+
 // ----------------------------------------------------------
 // 1. SET RESPONSE HEADER
 // ----------------------------------------------------------
@@ -173,6 +177,7 @@ if (is_string($rawWeekly) && $rawWeekly !== '') {
 $rawPrestige = fetch_with_cache_optional(NK_PRESTIGE_URL, CACHE_PRESTIGE);
 if (is_string($rawPrestige) && $rawPrestige !== '') {
     $prestigeStanding = find_ranked_score(parse_nk_entries($rawPrestige), $playerID);
+    $prestigeStanding['score'] = normalize_prestige_score($prestigeStanding['score']);
 }
 
 if (!empty($clanID)) {
