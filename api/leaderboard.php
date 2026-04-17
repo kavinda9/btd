@@ -50,6 +50,22 @@ function parse_nk_leaderboard_entries(string $raw): array {
     ];
 }
 
+function get_week_rotation_name(?int $weekNumber): ?string {
+    if (!$weekNumber || $weekNumber < 1) {
+        return null;
+    }
+
+    $rotation = [
+        'R3 Speed Bananza ZOMG',
+        'Speed Bananza ZOMG',
+        'Speed Bananza Boosts Only',
+        'Speed With Fire ZOMG',
+    ];
+
+    $index = ($weekNumber - 1) % count($rotation);
+    return $rotation[$index];
+}
+
 // ----------------------------------------------------------
 // 1. SET RESPONSE HEADER
 // ----------------------------------------------------------
@@ -79,6 +95,12 @@ if ($country !== '' && !preg_match('/^[A-Z]{2}$/', $country)) {
 $leaderboardUrl = NK_BASE_URL . '/storage/static/appdocs/2/leaderboards/WeeklyMedallions:569'
     . ($country !== '' ? ':' . $country : '')
     . '.json';
+
+$weekNumber = null;
+if (preg_match('/WeeklyMedallions:(\d+)/', $leaderboardUrl, $matches) === 1) {
+    $weekNumber = (int)$matches[1];
+}
+$weekName = get_week_rotation_name($weekNumber);
 
 $leaderboardCacheFile = CACHE_DIR . 'leaderboard_' . ($country !== '' ? strtolower($country) : 'global') . '.json';
 
@@ -162,6 +184,8 @@ echo json_encode([
     'cached'    => cache_is_valid($leaderboardCacheFile),
     'cachedPrestige' => cache_is_valid(CACHE_PRESTIGE),
     'country'   => $country !== '' ? $country : 'GLOBAL',
+    'weekNumber' => $weekNumber,
+    'weekName'  => $weekName,
     'count'     => count($players),
     'players'   => $players,
     'raw'       => DEV_MODE ? [

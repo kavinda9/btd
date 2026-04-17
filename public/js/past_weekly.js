@@ -7,6 +7,100 @@ const openPastClans = document.getElementById("openPastClans");
 const pastMeta = document.getElementById("pastMeta");
 const pastError = document.getElementById("pastError");
 const pastBody = document.getElementById("pastBody");
+const pastWeekInfo = document.getElementById("pastWeekInfo");
+
+const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const LIVE_WEEK_NUMBER = 569;
+const WEEKLY_MODE_ROTATION = [
+  "R3 Speed Bananza ZOMG",
+  "Speed Bananza ZOMG",
+  "Speed Bananza Boosts Only",
+  "Speed With Fire ZOMG",
+];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function pad2(value) {
+  return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
+}
+
+function getNextWeeklyResetTime() {
+  const now = Date.now();
+  const cycles = Math.ceil((now - WEEKLY_RESET_BASE) / WEEK_MS);
+  return new Date(WEEKLY_RESET_BASE + cycles * WEEK_MS);
+}
+
+function getWeeklyModeName(weekNumber) {
+  const week = Number(weekNumber);
+  if (!Number.isFinite(week) || week <= 0) {
+    return "";
+  }
+
+  const index = (week - 1) % WEEKLY_MODE_ROTATION.length;
+  return WEEKLY_MODE_ROTATION[index] || "";
+}
+
+function formatWeeklyRange(startDate, endDate) {
+  const startYear = startDate.getUTCFullYear();
+  const endYear = endDate.getUTCFullYear();
+  const startMonthName = MONTH_NAMES[startDate.getUTCMonth()];
+  const endMonthName = MONTH_NAMES[endDate.getUTCMonth()];
+  const startDay = pad2(startDate.getUTCDate());
+  const endDay = pad2(endDate.getUTCDate());
+
+  if (startYear === endYear && startMonthName === endMonthName) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endDay}`;
+  }
+
+  if (startYear === endYear) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endMonthName} ${endDay}`;
+  }
+
+  return `${startYear} ${startMonthName} ${startDay} - ${endYear} ${endMonthName} ${endDay}`;
+}
+
+function getWeekPeriodByNumber(weekNumber) {
+  const week = Number(weekNumber);
+  if (!Number.isFinite(week) || week <= 0) {
+    return null;
+  }
+
+  const currentWeekEnd = getNextWeeklyResetTime();
+  const offsetWeeks = LIVE_WEEK_NUMBER - week;
+  const end = new Date(currentWeekEnd.getTime() - offsetWeeks * WEEK_MS);
+  const start = new Date(end.getTime() - WEEK_MS);
+
+  return { start, end };
+}
+
+function updateWeekInfoText(weekNumber, weekName) {
+  if (!pastWeekInfo) {
+    return;
+  }
+
+  const period = getWeekPeriodByNumber(weekNumber);
+  const modeName = weekName || getWeeklyModeName(weekNumber) || "-";
+  if (!period) {
+    pastWeekInfo.textContent = `( ${modeName} )`;
+    return;
+  }
+
+  const range = formatWeeklyRange(period.start, period.end);
+  pastWeekInfo.textContent = `${range}\n( ${modeName} )`;
+}
 
 function rankClass(rank) {
   if (rank === 1) return "rank-pill rank-1";
@@ -111,14 +205,20 @@ async function loadWeekly(forceRefresh = false) {
     params.set("refresh", "1");
   }
 
-  pastMeta.textContent = "Loading weekly leaderboard...";
+  updateWeekInfoText(week, "");
 
   try {
     const data = await apiGet(`past_weekly.php?${params.toString()}`);
     renderRows(data.players || []);
-    pastMeta.textContent = `Week: ${formatNumber(data.week)} | Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
+    updateWeekInfoText(data.week || week, data.weekName || "");
+    if (pastMeta) {
+      pastMeta.textContent = "";
+    }
   } catch (error) {
-    pastMeta.textContent = "";
+    updateWeekInfoText(week, "");
+    if (pastMeta) {
+      pastMeta.textContent = "";
+    }
     pastError.textContent = error.message;
     pastError.hidden = false;
     pastBody.innerHTML =
@@ -144,6 +244,7 @@ if (weekInput) {
   const initialWeek =
     sanitiseWeek(queryParam("week")) || sanitiseWeek(weekInput.value) || 569;
   weekInput.value = String(initialWeek);
+  updateWeekInfoText(initialWeek, "");
 }
 
 loadWeekly(false);

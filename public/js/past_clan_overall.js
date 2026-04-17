@@ -130,16 +130,22 @@ async function loadClans(forceRefresh = false) {
     params.set("refresh", "1");
   }
 
-  pastMeta.textContent = "Loading clan leaderboard...";
+  if (pastMeta) {
+    pastMeta.textContent = "";
+  }
 
   try {
     const data = await apiGet(`past_clan_overall.php?${params.toString()}`);
     const clans = data.clans || [];
     renderRows(clans);
     resolveMissingClanNames(clans);
-    pastMeta.textContent = `Week: ${formatNumber(data.week)} | Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
+    if (pastMeta) {
+      pastMeta.textContent = "";
+    }
   } catch (error) {
-    pastMeta.textContent = "";
+    if (pastMeta) {
+      pastMeta.textContent = "";
+    }
     pastError.textContent = error.message;
     pastError.hidden = false;
     pastBody.innerHTML =

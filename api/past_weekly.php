@@ -41,6 +41,22 @@ function parse_nk_entries_weekly(string $raw): array {
     ];
 }
 
+function get_week_rotation_name(?int $weekNumber): ?string {
+    if (!$weekNumber || $weekNumber < 1) {
+        return null;
+    }
+
+    $rotation = [
+        'R3 Speed Bananza ZOMG',
+        'Speed Bananza ZOMG',
+        'Speed Bananza Boosts Only',
+        'Speed With Fire ZOMG',
+    ];
+
+    $index = ($weekNumber - 1) % count($rotation);
+    return $rotation[$index];
+}
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -90,6 +106,7 @@ foreach ($parsed['entries'] as $index => $entry) {
 echo json_encode([
     'success' => true,
     'week' => $week,
+    'weekName' => get_week_rotation_name($week),
     'cached' => cache_is_valid($cacheFile),
     'count' => count($players),
     'players' => $players,

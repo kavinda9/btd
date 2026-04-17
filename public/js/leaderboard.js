@@ -1,7 +1,6 @@
 const leaderboardBody = document.getElementById("leaderboardBody");
 const leaderboardMeta = document.getElementById("leaderboardMeta");
 const leaderboardError = document.getElementById("leaderboardError");
-const refreshBtn = document.getElementById("refreshBtn");
 const globalViewBtn = document.getElementById("globalViewBtn");
 const prestigeViewBtn = document.getElementById("prestigeViewBtn");
 const regionViewBtn = document.getElementById("regionViewBtn");
@@ -20,6 +19,33 @@ const prestigeLeaderboardError = document.getElementById(
   "prestigeLeaderboardError",
 );
 const prestigeRefreshBtn = document.getElementById("prestigeRefreshBtn");
+const leaderboardTimer = document.getElementById("leaderboardTimer");
+
+const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
+const PRESTIGE_RESET_BASE = Date.UTC(2017, 1, 15, 10, 0, 0);
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const BIWEEK_MS = 14 * 24 * 60 * 60 * 1000;
+const LIVE_WEEK_NUMBER = 569;
+const WEEKLY_MODE_ROTATION = [
+  "R3 Speed Bananza ZOMG",
+  "Speed Bananza ZOMG",
+  "Speed Bananza Boosts Only",
+  "Speed With Fire ZOMG",
+];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 const COUNTRY_OPTIONS = [
   { code: "AR", flag: "🇦🇷" },
@@ -85,6 +111,111 @@ const allowedCountries = new Set([
 
 let currentView = "global";
 let currentCountry = "GLOBAL";
+let currentWeeklyRotationLabel = "";
+let currentWeeklyNumber = null;
+
+function padTimerValue(value) {
+  return String(Math.max(0, value)).padStart(2, "0");
+}
+
+function getWeeklyModeName(weekNumber) {
+  const week = Number(weekNumber);
+  if (!Number.isFinite(week) || week <= 0) {
+    return "";
+  }
+
+  const index = (week - 1) % WEEKLY_MODE_ROTATION.length;
+  return WEEKLY_MODE_ROTATION[index] || "";
+}
+
+function formatWeeklyRange(startDate, endDate) {
+  const startYear = startDate.getUTCFullYear();
+  const endYear = endDate.getUTCFullYear();
+  const startMonthName = MONTH_NAMES[startDate.getUTCMonth()];
+  const endMonthName = MONTH_NAMES[endDate.getUTCMonth()];
+  const startDay = padTimerValue(startDate.getUTCDate());
+  const endDay = padTimerValue(endDate.getUTCDate());
+
+  if (startYear === endYear && startMonthName === endMonthName) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endDay}`;
+  }
+
+  if (startYear === endYear) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endMonthName} ${endDay}`;
+  }
+
+  return `${startYear} ${startMonthName} ${startDay} - ${endYear} ${endMonthName} ${endDay}`;
+}
+
+function getWeekPeriodByNumber(weekNumber, currentWeekEnd) {
+  const week = Number(weekNumber);
+  if (
+    !Number.isFinite(week) ||
+    week <= 0 ||
+    !(currentWeekEnd instanceof Date)
+  ) {
+    return null;
+  }
+
+  const offsetWeeks = LIVE_WEEK_NUMBER - week;
+  const end = new Date(currentWeekEnd.getTime() - offsetWeeks * WEEK_MS);
+  const start = new Date(end.getTime() - WEEK_MS);
+
+  return { start, end };
+}
+
+function getNextResetTime(mode) {
+  const now = Date.now();
+
+  if (mode === "prestige") {
+    const cycles = Math.ceil((now - PRESTIGE_RESET_BASE) / BIWEEK_MS);
+    return new Date(PRESTIGE_RESET_BASE + cycles * BIWEEK_MS);
+  }
+
+  const cycles = Math.ceil((now - WEEKLY_RESET_BASE) / WEEK_MS);
+  return new Date(WEEKLY_RESET_BASE + cycles * WEEK_MS);
+}
+
+function formatTimerCountdown(endTime) {
+  const diff = Math.max(0, endTime.getTime() - Date.now());
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${padTimerValue(days)}:${padTimerValue(hours)}:${padTimerValue(minutes)}:${padTimerValue(seconds)}`;
+}
+
+function updateLeaderboardTimer() {
+  if (!leaderboardTimer) {
+    return;
+  }
+
+  const mode = currentView === "prestige" ? "prestige" : "weekly";
+  const endTime = getNextResetTime(mode);
+  const showWeeklyLabel =
+    currentView === "global" &&
+    currentCountry === "GLOBAL" &&
+    currentWeeklyRotationLabel &&
+    Number.isFinite(Number(currentWeeklyNumber));
+
+  if (!showWeeklyLabel) {
+    leaderboardTimer.textContent = `Ends in: ${formatTimerCountdown(endTime)}`;
+    return;
+  }
+
+  const period = getWeekPeriodByNumber(currentWeeklyNumber, endTime);
+  if (!period) {
+    leaderboardTimer.textContent = `Ends in: ${formatTimerCountdown(endTime)}\n( ${currentWeeklyRotationLabel} )`;
+    return;
+  }
+
+  const dateRange = formatWeeklyRange(period.start, period.end);
+  leaderboardTimer.textContent = `Ends in: ${formatTimerCountdown(endTime)}\n${dateRange}\n( ${currentWeeklyRotationLabel} )`;
+}
+
+setInterval(updateLeaderboardTimer, 1000);
 
 function getSelectedCountry() {
   const raw = (queryParam("country") || "GLOBAL")
@@ -141,6 +272,7 @@ function showView(view) {
   }
 
   updateStateQuery();
+  updateLeaderboardTimer();
 }
 
 function openRegionModal() {
@@ -190,6 +322,10 @@ function rankClass(rank) {
   if (rank === 2) return "rank-pill rank-2";
   if (rank === 3) return "rank-pill rank-3";
   return "rank-pill";
+}
+
+function prestigeRowColorClass(rank) {
+  return rank % 2 === 1 ? "lb-row-prestige-odd" : "lb-row-prestige-even";
 }
 
 function rowColorClass(index, rank, enabled) {
@@ -434,7 +570,7 @@ function renderPrestigeRows(players) {
       const username = escapeHtml(player.username || "-");
       const prestige = formatNumber(player.prestige);
       const prizeBadge = prizeBadgeForPrestige(rank);
-      const rowClass = rowColorClass(index, rank, true);
+      const rowClass = prestigeRowColorClass(rank || index + 1);
 
       return `
 			<tr class="${rowClass}">
@@ -451,6 +587,7 @@ function renderPrestigeRows(players) {
 async function loadLeaderboard(forceRefresh = false) {
   leaderboardError.hidden = true;
   leaderboardMeta.textContent = "Loading...";
+  updateLeaderboardTimer();
 
   const country = currentCountry;
   const params = new URLSearchParams();
@@ -465,10 +602,24 @@ async function loadLeaderboard(forceRefresh = false) {
   try {
     const data = await apiGet(path);
     const players = data.players || [];
+    if (country === "GLOBAL") {
+      const weekNumber = Number(data.weekNumber);
+      currentWeeklyNumber = Number.isFinite(weekNumber) ? weekNumber : null;
+      currentWeeklyRotationLabel =
+        data.weekName || getWeeklyModeName(currentWeeklyNumber) || "";
+    } else {
+      currentWeeklyRotationLabel = "";
+      currentWeeklyNumber = null;
+    }
+
+    updateLeaderboardTimer();
     renderRows(players);
     const regionLabel = country === "GLOBAL" ? "GLOBAL" : `REGION ${country}`;
     leaderboardMeta.textContent = `${regionLabel} | Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
   } catch (error) {
+    currentWeeklyRotationLabel = "";
+    currentWeeklyNumber = null;
+    updateLeaderboardTimer();
     leaderboardBody.innerHTML =
       "<tr><td colspan='4'>Failed to load leaderboard.</td></tr>";
     leaderboardMeta.textContent = "";
@@ -488,6 +639,7 @@ async function loadPrestigeLeaderboard(forceRefresh = false) {
 
   prestigeLeaderboardError.hidden = true;
   prestigeLeaderboardMeta.textContent = "Loading...";
+  updateLeaderboardTimer();
 
   const path = forceRefresh
     ? "prestige_leaderboard.php?refresh=1"
@@ -504,17 +656,6 @@ async function loadPrestigeLeaderboard(forceRefresh = false) {
     prestigeLeaderboardError.textContent = error.message;
     prestigeLeaderboardError.hidden = false;
   }
-}
-
-if (refreshBtn) {
-  refreshBtn.addEventListener("click", () => {
-    if (currentView === "prestige") {
-      loadPrestigeLeaderboard(true);
-      return;
-    }
-
-    loadLeaderboard(true);
-  });
 }
 
 if (globalViewBtn) {

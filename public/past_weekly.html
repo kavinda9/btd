@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/main.css" />
-    <link rel="stylesheet" href="css/leaderboard.css?v=20260417k" />
+    <link rel="stylesheet" href="css/leaderboard.css?v=20260417q" />
   </head>
   <body>
     <div class="bg-orb orb-1"></div>
@@ -43,6 +43,7 @@
         <div>
           <p class="eyebrow">Historical Data</p>
           <h1>Past Weekly Leaderboard</h1>
+          <p class="leaderboard-timer" id="pastWeekInfo"></p>
         </div>
         <div class="page-actions week-actions">
           <label for="weekInput">Week</label>
@@ -83,7 +84,7 @@
       </section>
 
       <section class="card reveal">
-        <p class="muted" id="pastMeta">Loading...</p>
+        <p class="muted" id="pastMeta" hidden></p>
         <p class="error" id="pastError" hidden></p>
       </section>
 
@@ -94,8 +95,8 @@
               <tr>
                 <th>Rank</th>
                 <th>Prize</th>
-                <th>Username</th>
-                <th>Weekly Medallions</th>
+                <th>Name</th>
+                <th>Medallions</th>
               </tr>
             </thead>
             <tbody id="pastBody">
@@ -114,6 +115,6 @@
 
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/past_weekly.js?v=20260417d"></script>
+    <script src="js/past_weekly.js?v=20260417f"></script>
   </body>
 </html>

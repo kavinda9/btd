@@ -61,11 +61,15 @@
   padding: 0.75rem 0.7rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   text-align: left;
+  font-size: 150%;
+}
+
+.lb-table td {
+  color: #ffffff;
 }
 
 .lb-table th {
   color: #9db2e1;
-  font-size: 0.84rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -100,6 +104,22 @@
   background: #150133;
 }
 
+.lb-row-prestige-odd td {
+  background: #875614;
+}
+
+.lb-row-prestige-even td {
+  background: #291224;
+}
+
+.lb-row-prestige-odd:hover td {
+  background: #875614;
+}
+
+.lb-row-prestige-even:hover td {
+  background: #291224;
+}
+
 .rank-pill {
   display: inline-flex;
   min-width: 2.1rem;
@@ -131,7 +151,7 @@
 
 .mini-link {
   display: inline-block;
-  color: #8ce7ff;
+  color: #ffffff;
   text-decoration: none;
   font-weight: 700;
 }
@@ -143,7 +163,7 @@
 .prestige-score {
   display: inline-block;
   font-weight: 700;
-  color: #f7d17a;
+  color: #ffffff;
 }
 
 .prize-cell {
@@ -180,6 +200,20 @@
   margin: 0;
   font-size: 1.8rem;
   line-height: 1;
+}
+
+.leaderboard-timer {
+  margin: 0;
+  padding: 0.7rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(140, 231, 255, 0.45);
+  background: rgba(9, 65, 139, 0.34);
+  color: #f3fbff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: pre-line;
+  line-height: 1.45;
 }
 
 .modal-backdrop {
