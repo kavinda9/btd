@@ -225,6 +225,30 @@ function isRegionalBadgeId(badgeId) {
   return LOCAL_BADGE_KEYS.has(normalizeAssetKey(badgeId));
 }
 
+function getRegionalMergeOptions(badgeId, countryValue) {
+  const cfg = window.RegionalBadgePositionConfig || {};
+  const defaults = cfg.defaults || {};
+  const badgeKey = normalizeAssetKey(badgeId);
+  const byBadge = (cfg.byBadge && cfg.byBadge[badgeKey]) || {};
+
+  const countryCode = String(countryValue || "")
+    .trim()
+    .toUpperCase();
+  const byBadgeCountryMap =
+    (cfg.byBadgeCountry && cfg.byBadgeCountry[badgeKey]) || {};
+  const byBadgeCountry = (countryCode && byBadgeCountryMap[countryCode]) || {};
+
+  return {
+    flagScale: Number(defaults.flagScale) || 1.2,
+    offsetX:
+      Number(byBadgeCountry.offsetX ?? byBadge.offsetX ?? defaults.offsetX) ||
+      0,
+    offsetY:
+      Number(byBadgeCountry.offsetY ?? byBadge.offsetY ?? defaults.offsetY) ||
+      0,
+  };
+}
+
 async function applyRegionalMergeToImage(imgEl, fallbackCountryValue) {
   if (!imgEl) {
     return;
@@ -247,6 +271,7 @@ async function applyRegionalMergeToImage(imgEl, fallbackCountryValue) {
   const perBadgeCountry = imgEl.getAttribute("data-country") || "";
   const countryForBadge = perBadgeCountry || fallbackCountryValue;
   const flagCandidates = resolveCountryFlagCandidatePaths(countryForBadge);
+  const mergeOptions = getRegionalMergeOptions(badgeId, countryForBadge);
   if (!flagCandidates.length) {
     return;
   }
@@ -254,7 +279,7 @@ async function applyRegionalMergeToImage(imgEl, fallbackCountryValue) {
   const mergedSrc = await composer.mergeRegionalBadgeWithFallback(
     baseSrc,
     flagCandidates,
-    { flagScale: 0.44, padding: 1 },
+    mergeOptions,
   );
 
   if (mergedSrc) {

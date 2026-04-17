@@ -27,29 +27,12 @@
     return promise;
   }
 
-  function drawRoundedRect(ctx, x, y, width, height, radius) {
-    const r = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + width - r, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-    ctx.lineTo(x + width, y + height - r);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-    ctx.lineTo(x + r, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
   async function mergeRegionalBadge(baseSrc, flagSrc, options) {
     const opts = options || {};
-    const key = JSON.stringify([
-      baseSrc,
-      flagSrc,
-      opts.flagScale,
-      opts.padding,
-    ]);
+    const scale = Number(opts.flagScale) || 1.2;
+    const offsetX = Number(opts.offsetX) || 0;
+    const offsetY = Number(opts.offsetY) || 0;
+    const key = JSON.stringify([baseSrc, flagSrc, scale, offsetX, offsetY]);
 
     if (composeCache.has(key)) {
       return composeCache.get(key);
@@ -61,8 +44,19 @@
         loadImage(flagSrc),
       ]);
 
-      const width = Math.max(1, baseImg.naturalWidth || baseImg.width || 64);
-      const height = Math.max(1, baseImg.naturalHeight || baseImg.height || 64);
+      const baseW = Math.max(1, baseImg.naturalWidth || baseImg.width || 64);
+      const baseH = Math.max(1, baseImg.naturalHeight || baseImg.height || 64);
+      const rawFlagW = Math.max(1, flagImg.naturalWidth || flagImg.width || 64);
+      const rawFlagH = Math.max(
+        1,
+        flagImg.naturalHeight || flagImg.height || 64,
+      );
+      const flagW = Math.max(1, Math.round(rawFlagW * scale));
+      const flagH = Math.max(1, Math.round(rawFlagH * scale));
+
+      // Keep original image sizes and align centers, with optional px offsets.
+      const width = Math.max(baseW, flagW) + Math.abs(Math.round(offsetX)) * 2;
+      const height = Math.max(baseH, flagH) + Math.abs(Math.round(offsetY)) * 2;
 
       const canvas = document.createElement("canvas");
       canvas.width = width;
@@ -74,49 +68,13 @@
       }
 
       ctx.clearRect(0, 0, width, height);
-      ctx.drawImage(baseImg, 0, 0, width, height);
+      const baseX = Math.round((width - baseW) / 2);
+      const baseY = Math.round((height - baseH) / 2);
+      const flagX = Math.round((width - flagW) / 2) + Math.round(offsetX);
+      const flagY = Math.round((height - flagH) / 2) + Math.round(offsetY);
 
-      const scale = Math.min(
-        Math.max(Number(opts.flagScale) || 0.44, 0.2),
-        0.75,
-      );
-      const targetW = Math.round(width * scale);
-      const flagRatio =
-        (flagImg.naturalWidth || flagImg.width || 1) /
-        (flagImg.naturalHeight || flagImg.height || 1);
-      const targetH = Math.max(
-        1,
-        Math.round(targetW / Math.max(flagRatio, 0.2)),
-      );
-
-      const padding = Math.max(0, Math.round(Number(opts.padding) || 1));
-      const x = width - targetW - padding;
-      const y = height - targetH - padding;
-
-      ctx.save();
-      drawRoundedRect(
-        ctx,
-        x,
-        y,
-        targetW,
-        targetH,
-        Math.max(2, Math.round(targetH * 0.12)),
-      );
-      ctx.clip();
-      ctx.drawImage(flagImg, x, y, targetW, targetH);
-      ctx.restore();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.75)";
-      ctx.lineWidth = 1;
-      drawRoundedRect(
-        ctx,
-        x + 0.5,
-        y + 0.5,
-        targetW - 1,
-        targetH - 1,
-        Math.max(2, Math.round(targetH * 0.12)),
-      );
-      ctx.stroke();
+      ctx.drawImage(baseImg, baseX, baseY, baseW, baseH);
+      ctx.drawImage(flagImg, flagX, flagY, flagW, flagH);
 
       return canvas.toDataURL("image/png");
     })();
