@@ -229,6 +229,82 @@ h1 {
   letter-spacing: 0;
 }
 
+.arenas-card {
+  margin-top: 1rem;
+}
+
+.home-section-head {
+  margin-bottom: 0.45rem;
+}
+
+.home-section-title {
+  margin: 0;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.arenas-grid {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.arena-group {
+  margin-top: 1rem;
+}
+
+.arena-group-title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--accent-2);
+  letter-spacing: 0.03em;
+}
+
+.arena-sub-meta {
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
+}
+
+.arena-item {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.8rem;
+  background: rgba(9, 14, 30, 0.68);
+}
+
+.arena-item h3 {
+  margin: 0;
+  font-size: 1.18rem;
+}
+
+.arena-line {
+  margin: 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.arena-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.arena-tag,
+.arena-ad {
+  display: inline-block;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.arena-ad {
+  color: #ffd7a5;
+  border-color: rgba(255, 127, 80, 0.5);
+}
+
 .grid-2 {
   margin-top: 1rem;
   display: grid;
@@ -310,6 +386,10 @@ h1 {
   .grid-2 {
     grid-template-columns: 1fr;
   }
+
+  .arenas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -347,5 +427,9 @@ h1 {
 
   .hero {
     padding-top: 2rem;
+  }
+
+  .arenas-grid {
+    grid-template-columns: 1fr;
   }
 }

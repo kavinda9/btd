@@ -7,9 +7,57 @@
 require_once __DIR__ . '/../includes/config.php';
 
 // ----------------------------------------------------------
+// 0. CLEANUP – remove expired cache files
+//    Deletes any .json cache older than CACHE_TTL.
+// ----------------------------------------------------------
+function cache_cleanup_expired(): int {
+    $files = glob(CACHE_DIR . '*.json');
+    if ($files === false) {
+        return 0;
+    }
+
+    $deleted = 0;
+    $now = time();
+
+    foreach ($files as $file) {
+        if (!is_file($file)) {
+            continue;
+        }
+
+        $mtime = filemtime($file);
+        if ($mtime === false) {
+            continue;
+        }
+
+        if (($now - $mtime) >= CACHE_TTL) {
+            if (@unlink($file)) {
+                $deleted++;
+            }
+        }
+    }
+
+    return $deleted;
+}
+
+// ----------------------------------------------------------
+// 0b. CLEANUP ONCE – run cleanup at most once per request
+// ----------------------------------------------------------
+function cache_cleanup_expired_once(): void {
+    static $didCleanup = false;
+    if ($didCleanup) {
+        return;
+    }
+
+    cache_cleanup_expired();
+    $didCleanup = true;
+}
+
+// ----------------------------------------------------------
 // 1. CHECK – is a cached file still valid?
 // ----------------------------------------------------------
 function cache_is_valid(string $cacheFile): bool {
+    cache_cleanup_expired_once();
+
     if (!file_exists($cacheFile)) {
         return false;
     }
@@ -87,6 +135,9 @@ function cache_player_path(string $playerId): string {
 // ----------------------------------------------------------
 function fetch_with_cache(string $url, string $cacheFile): string {
 
+    // Keep cache directory tidy by deleting expired cache files.
+    cache_cleanup_expired_once();
+
     // Return cached version if still fresh
     if (cache_is_valid($cacheFile)) {
         return cache_read($cacheFile);
@@ -134,6 +185,9 @@ function fetch_with_cache(string $url, string $cacheFile): string {
 //    Returns false if remote + stale cache are unavailable.
 // ----------------------------------------------------------
 function fetch_with_cache_optional(string $url, string $cacheFile): string|false {
+
+    // Keep cache directory tidy by deleting expired cache files.
+    cache_cleanup_expired_once();
 
     if (cache_is_valid($cacheFile)) {
         return cache_read($cacheFile);

@@ -1,0 +1,1 @@
+<?php $data = json_decode(file_get_contents("php://stdin"), true); $types = []; if (isset($data["events"])) { foreach ($data["events"] as $event) { if (isset($event["type"])) $types[$event["type"]] = 1; } } echo json_encode(array_keys($types)); ?>

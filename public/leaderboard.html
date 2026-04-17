@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/main.css" />
-    <link rel="stylesheet" href="css/leaderboard.css" />
+    <link rel="stylesheet" href="css/leaderboard.css?v=20260417f" />
   </head>
   <body>
     <div class="bg-orb orb-1"></div>
@@ -45,24 +45,22 @@
           <h1>Leaderboard</h1>
         </div>
         <div class="page-actions">
-          <label for="countryFilter">Country</label>
-          <select
-            id="countryFilter"
-            class="btn btn-ghost"
-            aria-label="Filter by country"
-          >
-            <option value="GLOBAL">Global</option>
-            <option value="GB">GB</option>
-            <option value="US">US</option>
-            <option value="SA">SA</option>
-          </select>
+          <button class="btn btn-primary" id="globalViewBtn" type="button">
+            Global Leaderboard
+          </button>
+          <button class="btn btn-ghost" id="prestigeViewBtn" type="button">
+            Prestige Leaderboard
+          </button>
+          <button class="btn btn-ghost" id="regionViewBtn" type="button">
+            Region Leaderboard
+          </button>
           <button class="btn btn-ghost" id="refreshBtn" type="button">
             Force Refresh
           </button>
         </div>
       </section>
 
-      <section class="card reveal">
+      <section class="card reveal" id="weeklySection">
         <div class="table-wrap">
           <table class="lb-table" aria-live="polite">
             <thead>
@@ -71,13 +69,12 @@
                 <th>Player ID</th>
                 <th>Username</th>
                 <th>Weekly Medallions</th>
-                <th>Prestige Rating</th>
                 <th>Profile</th>
               </tr>
             </thead>
             <tbody id="leaderboardBody">
               <tr>
-                <td colspan="6">Loading leaderboard...</td>
+                <td colspan="5">Loading leaderboard...</td>
               </tr>
             </tbody>
           </table>
@@ -86,7 +83,11 @@
         <p class="error" id="leaderboardError" hidden></p>
       </section>
 
-      <section class="card reveal leaderboard-section">
+      <section
+        class="card reveal leaderboard-section"
+        id="prestigeSection"
+        hidden
+      >
         <div class="section-head">
           <div>
             <p class="eyebrow">Season Rating</p>
@@ -117,6 +118,28 @@
         <p class="muted" id="prestigeLeaderboardMeta"></p>
         <p class="error" id="prestigeLeaderboardError" hidden></p>
       </section>
+
+      <div class="modal-backdrop" id="regionModal" hidden>
+        <div
+          class="modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="regionModalTitle"
+        >
+          <div class="modal-head">
+            <h2 id="regionModalTitle">Pick Region</h2>
+            <button
+              class="btn btn-ghost modal-close"
+              id="regionModalClose"
+              type="button"
+            >
+              Close
+            </button>
+          </div>
+          <p class="muted">Choose a flag:</p>
+          <div class="flag-grid" id="regionFlagsGrid"></div>
+        </div>
+      </div>
     </main>
 
     <footer class="site-footer">
@@ -125,6 +148,6 @@
 
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/leaderboard.js"></script>
+    <script src="js/leaderboard.js?v=20260417f"></script>
   </body>
 </html>
