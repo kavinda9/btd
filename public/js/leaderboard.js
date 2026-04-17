@@ -192,46 +192,254 @@ function rankClass(rank) {
   return "rank-pill";
 }
 
+function rowColorClass(index, rank, enabled) {
+  if (!enabled) {
+    return "";
+  }
+
+  return index % 2 === 0 ? "lb-row-alt-a" : "lb-row-alt-b";
+}
+
+function normalizeAssetKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function getRegionFlagFileName(countryCode) {
+  const byCode = {
+    FI: "Finland",
+    FR: "France",
+    DE: "Germany",
+    GR: "Greece",
+    HK: "HongKong",
+    HU: "Hungary",
+    ID: "Indonesia",
+    IE: "Ireland",
+    IL: "Israel",
+    IT: "Italy",
+    JP: "Japan",
+    LV: "Latvia",
+    LT: "Lithuania",
+    MY: "Malaysia",
+    MX: "Mexico",
+    NL: "Netherlands",
+    NZ: "NewZealand",
+    NO: "Norway",
+    PH: "Philippines",
+    PL: "Poland",
+    PT: "Portugal",
+    TW: "RepublicOfChina",
+    RO: "Romania",
+    RU: "Russia",
+    SA: "SaudiArabia",
+    SG: "Singapore",
+    SI: "Slovenia",
+    ZA: "SouthAfrica",
+    KR: "SouthKorea",
+    ES: "Spain",
+    SE: "Sweden",
+    CH: "Switzerland",
+    TH: "Thailand",
+    TR: "Turkey",
+    UA: "Ukraine",
+    AE: "UnitedArabEmirates",
+    VN: "Vietnam",
+  };
+
+  const code = String(countryCode || "")
+    .trim()
+    .toUpperCase();
+  if (!code) return null;
+  return byCode[code] || code;
+}
+
+function getRegionFlagCandidatePaths(countryCode) {
+  const code = String(countryCode || "")
+    .trim()
+    .toUpperCase();
+  if (!code) {
+    return [];
+  }
+
+  const mapped = getRegionFlagFileName(code);
+  const candidates = [mapped, code].filter(Boolean);
+  return [...new Set(candidates)].map(
+    (name) => `images/Country%20Flags/${encodeURIComponent(name)}.png`,
+  );
+}
+
+function getRegionalMergeOptions(badgeId, countryValue) {
+  const cfg = window.RegionalBadgePositionConfig || {};
+  const defaults = cfg.defaults || {};
+  const badgeKey = normalizeAssetKey(badgeId);
+  const byBadge = (cfg.byBadge && cfg.byBadge[badgeKey]) || {};
+
+  const countryCode = String(countryValue || "")
+    .trim()
+    .toUpperCase();
+  const byBadgeCountryMap =
+    (cfg.byBadgeCountry && cfg.byBadgeCountry[badgeKey]) || {};
+  const byBadgeCountry = (countryCode && byBadgeCountryMap[countryCode]) || {};
+
+  return {
+    flagScale: Number(defaults.flagScale) || 1.2,
+    offsetX:
+      Number(byBadgeCountry.offsetX ?? byBadge.offsetX ?? defaults.offsetX) ||
+      0,
+    offsetY:
+      Number(byBadgeCountry.offsetY ?? byBadge.offsetY ?? defaults.offsetY) ||
+      0,
+  };
+}
+
+async function applyRegionalPrizeMerge(imgEl) {
+  if (!imgEl) {
+    return;
+  }
+
+  const composer = window.RegionalBadgeComposer;
+  if (
+    !composer ||
+    typeof composer.mergeRegionalBadgeWithFallback !== "function"
+  ) {
+    return;
+  }
+
+  const badgeId = imgEl.getAttribute("data-badge-id") || "";
+  const countryCode = imgEl.getAttribute("data-country") || "";
+  const baseSrc = imgEl.getAttribute("data-base-src") || "";
+  if (!badgeId || !countryCode || !baseSrc) {
+    return;
+  }
+
+  const flagCandidates = getRegionFlagCandidatePaths(countryCode);
+  if (!flagCandidates.length) {
+    return;
+  }
+
+  const mergeOptions = getRegionalMergeOptions(badgeId, countryCode);
+  const mergedSrc = await composer.mergeRegionalBadgeWithFallback(
+    baseSrc,
+    flagCandidates,
+    mergeOptions,
+  );
+
+  if (mergedSrc) {
+    imgEl.src = mergedSrc;
+  }
+}
+
+function enhanceRegionalPrizeBadges() {
+  const nodes = document.querySelectorAll(".js-regional-prize-badge");
+  nodes.forEach((node) => {
+    applyRegionalPrizeMerge(node).catch(() => {
+      // Keep base image as fallback.
+    });
+  });
+}
+
+function prizeBadgeForWeekly(rank) {
+  if (currentCountry !== "GLOBAL") {
+    if (rank === 1) return "local_gold";
+    if (rank === 2) return "local_silver";
+    if (rank === 3) return "local_bronze";
+    return null;
+  }
+
+  if (rank === 1) return "black_diamond";
+  if (rank === 2) return "red_diamond";
+  if (rank === 3) return "diamond";
+  if (rank <= 100) return "gold";
+  if (rank <= 1000) return "silvergold";
+  if (rank <= 10000) return "silverx2";
+  return "silverx1";
+}
+
+function prizeBadgeForPrestige(rank) {
+  if (rank === 1) return "black_diamond_prestige";
+  if (rank === 2) return "red_diamond_prestige";
+  if (rank === 3) return "diamond_prestige";
+  if (rank <= 10) return "gold_black_diamond_prestige";
+  if (rank <= 25) return "gold_red_diamond_prestige";
+  if (rank <= 100) return "gold_diamond_prestige";
+  if (rank <= 500) return "diamond_prestige";
+  if (rank <= 2000) return "gold_prestige";
+  if (rank <= 5000) return "silver_gold_prestige";
+  if (rank <= 15000) return "silver_prestige";
+  return "bronze_prestige";
+}
+
+function renderPrizeBadgeCell(fileName, rank, label) {
+  if (!fileName) {
+    return "<span class='muted'>-</span>";
+  }
+
+  const src = `images/badges/${encodeURIComponent(fileName)}.png`;
+  const alt = `${label} T${formatNumber(rank)}`;
+  const isRegionPrize =
+    currentCountry !== "GLOBAL" && fileName.startsWith("local_");
+  const regionAttrs = isRegionPrize
+    ? ` data-base-src="${src}" data-badge-id="${escapeHtml(fileName)}" data-country="${escapeHtml(currentCountry)}" class="prize-badge js-regional-prize-badge"`
+    : ` class="prize-badge"`;
+
+  return `<img${regionAttrs} src="${src}" alt="${escapeHtml(alt)}" title="${escapeHtml(alt)}" loading="lazy" />`;
+}
+
 function renderRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     leaderboardBody.innerHTML =
-      "<tr><td colspan='3'>No leaderboard entries found.</td></tr>";
+      "<tr><td colspan='4'>No leaderboard entries found.</td></tr>";
     return;
   }
 
   leaderboardBody.innerHTML = players
-    .map((player) => {
+    .map((player, index) => {
       const rank = Number(player.rank) || 0;
       const username = escapeHtml(player.username || "-");
       const medallions = formatNumber(player.medallions);
+      const prizeBadge = prizeBadgeForWeekly(rank);
+      const prizeLabel =
+        currentCountry === "GLOBAL"
+          ? "Global Prize"
+          : `Region ${currentCountry} Prize`;
+      const rowClass = rowColorClass(index, rank, currentCountry === "GLOBAL");
 
       return `
-			<tr>
+			<tr class="${rowClass}">
 				<td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
+        <td class="prize-cell">${renderPrizeBadgeCell(prizeBadge, rank, prizeLabel)}</td>
         <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
 				<td>${medallions}</td>
 			</tr>
 		`;
     })
     .join("");
+
+  if (currentCountry !== "GLOBAL") {
+    enhanceRegionalPrizeBadges();
+  }
 }
 
 function renderPrestigeRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     prestigeLeaderboardBody.innerHTML =
-      "<tr><td colspan='3'>No prestige leaderboard entries found.</td></tr>";
+      "<tr><td colspan='4'>No prestige leaderboard entries found.</td></tr>";
     return;
   }
 
   prestigeLeaderboardBody.innerHTML = players
-    .map((player) => {
+    .map((player, index) => {
       const rank = Number(player.rank) || 0;
       const username = escapeHtml(player.username || "-");
       const prestige = formatNumber(player.prestige);
+      const prizeBadge = prizeBadgeForPrestige(rank);
+      const rowClass = rowColorClass(index, rank, true);
 
       return `
-			<tr>
+			<tr class="${rowClass}">
 				<td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
+        <td class="prize-cell">${renderPrizeBadgeCell(prizeBadge, rank, "Prestige Prize")}</td>
         <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
 				<td><span class="prestige-score">${prestige}</span></td>
 			</tr>
@@ -262,7 +470,7 @@ async function loadLeaderboard(forceRefresh = false) {
     leaderboardMeta.textContent = `${regionLabel} | Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
   } catch (error) {
     leaderboardBody.innerHTML =
-      "<tr><td colspan='3'>Failed to load leaderboard.</td></tr>";
+      "<tr><td colspan='4'>Failed to load leaderboard.</td></tr>";
     leaderboardMeta.textContent = "";
     leaderboardError.textContent = error.message;
     leaderboardError.hidden = false;
@@ -291,7 +499,7 @@ async function loadPrestigeLeaderboard(forceRefresh = false) {
     prestigeLeaderboardMeta.textContent = `Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
   } catch (error) {
     prestigeLeaderboardBody.innerHTML =
-      "<tr><td colspan='3'>Failed to load prestige leaderboard.</td></tr>";
+      "<tr><td colspan='4'>Failed to load prestige leaderboard.</td></tr>";
     prestigeLeaderboardMeta.textContent = "";
     prestigeLeaderboardError.textContent = error.message;
     prestigeLeaderboardError.hidden = false;

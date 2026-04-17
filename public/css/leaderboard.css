@@ -74,6 +74,32 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.lb-table.lb-colored thead th {
+  background: #09418b;
+  color: #eaf1ff;
+}
+
+.lb-row-alt-a td {
+  background: #240655;
+}
+
+.lb-row-alt-b td {
+  background: #150133;
+}
+
+.lb-row-alt-a:hover td,
+.lb-row-alt-b:hover td {
+  background: inherit;
+}
+
+.lb-row-alt-a:hover td {
+  background: #240655;
+}
+
+.lb-row-alt-b:hover td {
+  background: #150133;
+}
+
 .rank-pill {
   display: inline-flex;
   min-width: 2.1rem;
@@ -118,6 +144,17 @@
   display: inline-block;
   font-weight: 700;
   color: #f7d17a;
+}
+
+.prize-cell {
+  width: 74px;
+}
+
+.prize-badge {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  display: block;
 }
 
 .cell-sub {

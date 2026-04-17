@@ -15,6 +15,34 @@ function rankClass(rank) {
   return "rank-pill";
 }
 
+function rowColorClass(index, rank) {
+  return index % 2 === 0 ? "lb-row-alt-a" : "lb-row-alt-b";
+}
+
+function prizeBadgeForPrestige(rank) {
+  if (rank === 1) return "black_diamond_prestige";
+  if (rank === 2) return "red_diamond_prestige";
+  if (rank === 3) return "diamond_prestige";
+  if (rank <= 10) return "gold_black_diamond_prestige";
+  if (rank <= 25) return "gold_red_diamond_prestige";
+  if (rank <= 100) return "gold_diamond_prestige";
+  if (rank <= 500) return "diamond_prestige";
+  if (rank <= 2000) return "gold_prestige";
+  if (rank <= 5000) return "silver_gold_prestige";
+  if (rank <= 15000) return "silver_prestige";
+  return "bronze_prestige";
+}
+
+function renderPrizeBadgeCell(fileName, rank) {
+  if (!fileName) {
+    return "<span class='muted'>-</span>";
+  }
+
+  const src = `images/badges/${encodeURIComponent(fileName)}.png`;
+  const alt = `Prestige Prize T${formatNumber(rank)}`;
+  return `<img class="prize-badge" src="${src}" alt="${escapeHtml(alt)}" title="${escapeHtml(alt)}" loading="lazy" />`;
+}
+
 function sanitiseWeek(value) {
   const week = Number.parseInt(String(value || "").trim(), 10);
   if (!Number.isFinite(week) || week <= 0) {
@@ -44,19 +72,22 @@ function applyWeekLinks(week) {
 function renderRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     pastBody.innerHTML =
-      "<tr><td colspan='3'>No prestige data found for this week.</td></tr>";
+      "<tr><td colspan='4'>No prestige data found for this week.</td></tr>";
     return;
   }
 
   pastBody.innerHTML = players
-    .map((player) => {
+    .map((player, index) => {
       const rank = Number(player.rank) || 0;
       const username = escapeHtml(player.username || "-");
       const prestige = formatNumber(player.prestige);
+      const prizeBadge = prizeBadgeForPrestige(rank);
+      const rowClass = rowColorClass(index, rank);
 
       return `
-      <tr>
+      <tr class="${rowClass}">
         <td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
+        <td class="prize-cell">${renderPrizeBadgeCell(prizeBadge, rank)}</td>
         <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
         <td><span class="prestige-score">${prestige}</span></td>
       </tr>
@@ -95,7 +126,7 @@ async function loadPrestige(forceRefresh = false) {
     pastError.textContent = error.message;
     pastError.hidden = false;
     pastBody.innerHTML =
-      "<tr><td colspan='3'>Failed to load prestige leaderboard.</td></tr>";
+      "<tr><td colspan='4'>Failed to load prestige leaderboard.</td></tr>";
   }
 }
 

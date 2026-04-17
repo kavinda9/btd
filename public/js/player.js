@@ -273,6 +273,10 @@ async function applyRegionalMergeToImage(imgEl, fallbackCountryValue) {
   const flagCandidates = resolveCountryFlagCandidatePaths(countryForBadge);
   const mergeOptions = getRegionalMergeOptions(badgeId, countryForBadge);
   if (!flagCandidates.length) {
+    const badgeEl = imgEl.closest(".badge");
+    if (badgeEl) {
+      badgeEl.remove();
+    }
     return;
   }
 
@@ -284,6 +288,12 @@ async function applyRegionalMergeToImage(imgEl, fallbackCountryValue) {
 
   if (mergedSrc) {
     imgEl.src = mergedSrc;
+    return;
+  }
+
+  const badgeEl = imgEl.closest(".badge");
+  if (badgeEl) {
+    badgeEl.remove();
   }
 }
 
