@@ -8,6 +8,58 @@
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/cache.php';
 
+function parse_nk_entries(string $raw): array {
+    $decoded = json_decode($raw, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+        return ['entries' => [], 'rankBase' => 0];
+    }
+
+    $payload = $decoded;
+
+    if (isset($decoded['data']) && is_string($decoded['data'])) {
+        $inner = json_decode($decoded['data'], true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($inner)) {
+            $payload = $inner;
+        }
+    } elseif (isset($decoded['data']) && is_array($decoded['data'])) {
+        $payload = $decoded['data'];
+    }
+
+    $entries = [];
+    $rankBase = 0;
+
+    if (isset($payload['scores']['equal']) && is_array($payload['scores']['equal'])) {
+        $entries = $payload['scores']['equal'];
+        $rankBase = isset($payload['scores']['above']) && is_array($payload['scores']['above'])
+            ? count($payload['scores']['above'])
+            : 0;
+    } elseif (isset($payload['scores']) && is_array($payload['scores'])) {
+        $entries = $payload['scores'];
+    }
+
+    return [
+        'entries' => $entries,
+        'rankBase' => $rankBase,
+    ];
+}
+
+function find_ranked_score(array $parsed, string $targetId): array {
+    foreach ($parsed['entries'] as $index => $entry) {
+        $entryId = (string) ($entry['userID'] ?? $entry['playerID'] ?? $entry['clanID'] ?? $entry['id'] ?? '');
+        if ($entryId === $targetId) {
+            return [
+                'rank' => (int)$parsed['rankBase'] + $index + 1,
+                'score' => (int)($entry['score'] ?? $entry['value'] ?? 0),
+            ];
+        }
+    }
+
+    return [
+        'rank' => null,
+        'score' => null,
+    ];
+}
+
 // ----------------------------------------------------------
 // 1. SET RESPONSE HEADER
 // ----------------------------------------------------------
@@ -108,6 +160,28 @@ $clanID      = $profileData['clanID']   ?? ($profileData['clan']['id'] ?? null) 
 // -- Towers / loadout (if available) --
 $towers      = $profileData['towers']   ?? $profileData['loadout'] ?? null;
 
+// -- Optional leaderboard enrichments --
+$weeklyStanding = ['rank' => null, 'score' => null];
+$prestigeStanding = ['rank' => null, 'score' => null];
+$clanStanding = ['rank' => null, 'score' => null];
+
+$rawWeekly = fetch_with_cache_optional(NK_LEADERBOARD_URL, CACHE_LEADERBOARD);
+if (is_string($rawWeekly) && $rawWeekly !== '') {
+    $weeklyStanding = find_ranked_score(parse_nk_entries($rawWeekly), $playerID);
+}
+
+$rawPrestige = fetch_with_cache_optional(NK_PRESTIGE_URL, CACHE_PRESTIGE);
+if (is_string($rawPrestige) && $rawPrestige !== '') {
+    $prestigeStanding = find_ranked_score(parse_nk_entries($rawPrestige), $playerID);
+}
+
+if (!empty($clanID)) {
+    $rawClan = fetch_with_cache_optional(NK_CLAN_URL, CACHE_CLAN);
+    if (is_string($rawClan) && $rawClan !== '') {
+        $clanStanding = find_ranked_score(parse_nk_entries($rawClan), (string)$clanID);
+    }
+}
+
 // ----------------------------------------------------------
 // 9. SEND CLEAN RESPONSE
 // ----------------------------------------------------------
@@ -128,6 +202,20 @@ echo json_encode([
             'wins'    => $wins,
             'losses'  => $losses,
             'winRate' => $winRate,
+        ],
+        'leaderboards' => [
+            'weekly' => [
+                'rank' => $weeklyStanding['rank'],
+                'score' => $weeklyStanding['score'],
+            ],
+            'prestige' => [
+                'rank' => $prestigeStanding['rank'],
+                'score' => $prestigeStanding['score'],
+            ],
+            'clan' => [
+                'rank' => $clanStanding['rank'],
+                'score' => $clanStanding['score'],
+            ],
         ],
         'towers'     => $towers,
     ],

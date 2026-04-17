@@ -32,6 +32,8 @@
       <nav class="site-nav" id="siteNav">
         <a href="index.html">Home</a>
         <a class="active" href="leaderboard.html">Leaderboard</a>
+        <a href="past_weeks.html">Past Weeks</a>
+        <a href="clans.html">Clans</a>
         <a href="player.html">Player Lookup</a>
       </nav>
     </header>
@@ -43,6 +45,17 @@
           <h1>Leaderboard</h1>
         </div>
         <div class="page-actions">
+          <label for="countryFilter">Country</label>
+          <select
+            id="countryFilter"
+            class="btn btn-ghost"
+            aria-label="Filter by country"
+          >
+            <option value="GLOBAL">Global</option>
+            <option value="GB">GB</option>
+            <option value="US">US</option>
+            <option value="SA">SA</option>
+          </select>
           <button class="btn btn-ghost" id="refreshBtn" type="button">
             Force Refresh
           </button>
@@ -57,19 +70,52 @@
                 <th>#</th>
                 <th>Player ID</th>
                 <th>Username</th>
-                <th>Medallions</th>
+                <th>Weekly Medallions</th>
+                <th>Prestige Rating</th>
                 <th>Profile</th>
               </tr>
             </thead>
             <tbody id="leaderboardBody">
               <tr>
-                <td colspan="5">Loading leaderboard...</td>
+                <td colspan="6">Loading leaderboard...</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p class="muted" id="leaderboardMeta"></p>
         <p class="error" id="leaderboardError" hidden></p>
+      </section>
+
+      <section class="card reveal leaderboard-section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Season Rating</p>
+            <h2 class="section-title">Prestige Leaderboard</h2>
+          </div>
+          <button class="btn btn-ghost" id="prestigeRefreshBtn" type="button">
+            Refresh Prestige
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table class="lb-table" aria-live="polite">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player ID</th>
+                <th>Username</th>
+                <th>Prestige Rating</th>
+                <th>Profile</th>
+              </tr>
+            </thead>
+            <tbody id="prestigeLeaderboardBody">
+              <tr>
+                <td colspan="5">Loading prestige leaderboard...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" id="prestigeLeaderboardMeta"></p>
+        <p class="error" id="prestigeLeaderboardError" hidden></p>
       </section>
     </main>
 

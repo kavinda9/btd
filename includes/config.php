@@ -9,6 +9,9 @@
 // ----------------------------------------------------------
 define('NK_BASE_URL',        'https://priority-static-api.nkstatic.com');
 define('NK_LEADERBOARD_URL', NK_BASE_URL . '/storage/static/appdocs/2/leaderboards/WeeklyMedallions:569.json');
+define('NK_PRESTIGE_URL',    NK_BASE_URL . '/storage/static/appdocs/2/leaderboards/ladder:Season_238:Rating.json');
+define('NK_CLAN_WEEKLY_ID',  '567');
+define('NK_CLAN_URL',        NK_BASE_URL . '/storage/static/appdocs/2/leaderboards/guild:compiled:WeeklyMedallions:' . NK_CLAN_WEEKLY_ID . ':Club.json');
 define('NK_PROFILE_BASE',    NK_BASE_URL . '/storage/static/2/');   // append {playerID}/PublicProfile.save
 
 // ----------------------------------------------------------
@@ -16,6 +19,8 @@ define('NK_PROFILE_BASE',    NK_BASE_URL . '/storage/static/2/');   // append {p
 // ----------------------------------------------------------
 define('CACHE_DIR',          __DIR__ . '/../cache/');   // writable cache folder
 define('CACHE_LEADERBOARD',  CACHE_DIR . 'leaderboard.json');
+define('CACHE_PRESTIGE',     CACHE_DIR . 'leaderboard_prestige.json');
+define('CACHE_CLAN',         CACHE_DIR . 'leaderboard_clan.json');
 define('CACHE_TTL',          600);                      // seconds (10 minutes)
 
 // ----------------------------------------------------------

@@ -128,3 +128,42 @@ function fetch_with_cache(string $url, string $cacheFile): string {
 
     return $data;
 }
+
+// ----------------------------------------------------------
+// 8. FETCH OPTIONAL – same cache flow, but do not exit on error
+//    Returns false if remote + stale cache are unavailable.
+// ----------------------------------------------------------
+function fetch_with_cache_optional(string $url, string $cacheFile): string|false {
+
+    if (cache_is_valid($cacheFile)) {
+        return cache_read($cacheFile);
+    }
+
+    $context = stream_context_create([
+        'http' => [
+            'timeout'        => HTTP_TIMEOUT,
+            'ignore_errors'  => true,
+            'method'         => 'GET',
+            'header'         => "User-Agent: BTDBattlesStats/1.0\r\n",
+        ],
+    ]);
+
+    $data = @file_get_contents($url, false, $context);
+
+    $httpCode = 0;
+    if (isset($http_response_header)) {
+        foreach ($http_response_header as $header) {
+            if (preg_match('/HTTP\/\d\.\d\s+(\d+)/', $header, $matches)) {
+                $httpCode = (int) $matches[1];
+            }
+        }
+    }
+
+    if ($data === false || $httpCode >= 400) {
+        $stale = cache_read($cacheFile);
+        return $stale !== false ? $stale : false;
+    }
+
+    cache_write($cacheFile, $data);
+    return $data;
+}

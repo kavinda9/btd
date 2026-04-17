@@ -263,6 +263,16 @@ h1 {
   color: var(--danger);
 }
 
+.mini-link {
+  color: #8ce7ff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.mini-link:hover {
+  text-decoration: underline;
+}
+
 .site-footer {
   width: min(1120px, calc(100% - 2rem));
   margin: 0 auto 1rem;

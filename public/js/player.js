@@ -8,6 +8,8 @@ const playerIdLabel = document.getElementById("playerIdLabel");
 const topStats = document.getElementById("topStats");
 const battleStats = document.getElementById("battleStats");
 const metaStats = document.getElementById("metaStats");
+const clanJumpWrap = document.getElementById("clanJumpWrap");
+const clanJumpLink = document.getElementById("clanJumpLink");
 
 function renderStatList(target, rows) {
   target.innerHTML = rows
@@ -23,6 +25,10 @@ function renderStatList(target, rows) {
 function renderProfile(data) {
   const profile = data.profile || {};
   const stats = profile.stats || {};
+  const leaderboards = profile.leaderboards || {};
+  const weekly = leaderboards.weekly || {};
+  const prestige = leaderboards.prestige || {};
+  const clan = leaderboards.clan || {};
 
   usernameEl.textContent = profile.username || "Unknown";
   playerIdLabel.textContent = `Player ID: ${data.playerID || "Unknown"}`;
@@ -50,9 +56,37 @@ function renderProfile(data) {
   renderStatList(metaStats, [
     { label: "Clan", value: profile.clan || "-" },
     { label: "Clan ID", value: profile.clanID || "-" },
+    {
+      label: "Clan Leaderboard",
+      value:
+        clan.rank === null || clan.rank === undefined
+          ? "-"
+          : `#${formatNumber(clan.rank)} (${formatNumber(clan.score)})`,
+    },
+    {
+      label: "Weekly Leaderboard",
+      value:
+        weekly.rank === null || weekly.rank === undefined
+          ? "-"
+          : `#${formatNumber(weekly.rank)} (${formatNumber(weekly.score)})`,
+    },
+    {
+      label: "Prestige Leaderboard",
+      value:
+        prestige.rank === null || prestige.rank === undefined
+          ? "-"
+          : `#${formatNumber(prestige.rank)} (${formatNumber(prestige.score)})`,
+    },
     { label: "XP", value: formatNumber(profile.xp) },
     { label: "Cached", value: data.cached ? "Yes" : "No" },
   ]);
+
+  if (profile.clanID && clanJumpWrap && clanJumpLink) {
+    clanJumpLink.href = `clans.html?clanID=${encodeURIComponent(profile.clanID)}`;
+    clanJumpWrap.hidden = false;
+  } else if (clanJumpWrap) {
+    clanJumpWrap.hidden = true;
+  }
 
   profileGrid.hidden = false;
 }
