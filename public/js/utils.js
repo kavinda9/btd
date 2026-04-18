@@ -1,4 +1,4 @@
-const API_BASE = "../api";
+const API_BASE = window.BTD_API_BASE || "../api";
 
 async function apiGet(path) {
   const response = await fetch(`${API_BASE}/${path}`, {

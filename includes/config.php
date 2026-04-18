@@ -39,7 +39,7 @@ define('MAX_ID_LENGTH',   64);    // max chars allowed in a player ID param
 // ----------------------------------------------------------
 // 5. ERROR REPORTING (set to false on production)
 // ----------------------------------------------------------
-define('DEV_MODE', true);
+define('DEV_MODE', filter_var(getenv('DEV_MODE') ?: 'false', FILTER_VALIDATE_BOOLEAN));
 
 if (DEV_MODE) {
     ini_set('display_errors', 1);
@@ -52,9 +52,20 @@ if (DEV_MODE) {
 // ----------------------------------------------------------
 // 6. CORS HEADERS
 // ----------------------------------------------------------
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET');
-header('Access-Control-Allow-Headers: Content-Type');
+$corsAllowOrigin = getenv('CORS_ALLOW_ORIGIN') ?: '*';
+if ($corsAllowOrigin === '*') {
+    header('Access-Control-Allow-Origin: *');
+} else {
+    header('Access-Control-Allow-Origin: ' . $corsAllowOrigin);
+    header('Vary: Origin');
+}
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Accept');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 // ----------------------------------------------------------
 // 7. HELPER – send a JSON error response and exit
