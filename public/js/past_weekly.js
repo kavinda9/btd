@@ -6,6 +6,8 @@ const openPastClans = document.getElementById("openPastClans");
 const pastError = document.getElementById("pastError");
 const pastBody = document.getElementById("pastBody");
 const pastWeekInfo = document.getElementById("pastWeekInfo");
+const pastWeeklyCountryCache = new Map();
+const pastWeeklyCountryPending = new Map();
 
 const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -77,7 +79,7 @@ function getWeeklyModeName(weekNumber) {
   }
 
   const size = WEEKLY_OLD_MODE_ROTATION.length;
-  const index = ((week - OLD_ROTATION_ANCHOR_WEEK) % size + size) % size;
+  const index = (((week - OLD_ROTATION_ANCHOR_WEEK) % size) + size) % size;
   return WEEKLY_OLD_MODE_ROTATION[index] || "";
 }
 
@@ -97,11 +99,15 @@ function renderWeekInfoCard(weekNumber, weekName) {
     : "";
 
   return `
-    ${imageSrc ? `
+    ${
+      imageSrc
+        ? `
       <span class="week-info-image-wrap">
         <img class="week-info-image" src="${imageSrc}" alt="${escapeHtml(modeName)} arena" loading="lazy" decoding="async" />
       </span>
-    ` : ""}
+    `
+        : ""
+    }
     <span class="week-info-copy">
       ${range ? `<span class="week-info-date">${escapeHtml(range)}</span>` : ""}
       <span class="week-info-mode">( ${escapeHtml(modeName)} )</span>
@@ -181,6 +187,71 @@ function renderPrizeBadgeCell(fileName, rank) {
   return `<img class="prize-badge" src="${src}" alt="${escapeHtml(alt)}" title="${escapeHtml(alt)}" loading="lazy" />`;
 }
 
+function normalizeCountryCode(value) {
+  const code = String(value || "")
+    .trim()
+    .toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
+async function fetchPastWeeklyCountryCode(playerID) {
+  const id = String(playerID || "").trim();
+  if (!id) {
+    return null;
+  }
+
+  if (pastWeeklyCountryCache.has(id)) {
+    return pastWeeklyCountryCache.get(id);
+  }
+
+  if (pastWeeklyCountryPending.has(id)) {
+    return pastWeeklyCountryPending.get(id);
+  }
+
+  const request = (async () => {
+    try {
+      const data = await apiGet(`player.php?id=${encodeURIComponent(id)}`);
+      const code = normalizeCountryCode(data?.profile?.countryCode);
+      pastWeeklyCountryCache.set(id, code);
+      return code;
+    } catch (_) {
+      pastWeeklyCountryCache.set(id, null);
+      return null;
+    } finally {
+      pastWeeklyCountryPending.delete(id);
+    }
+  })();
+
+  pastWeeklyCountryPending.set(id, request);
+  return request;
+}
+
+async function hydratePastWeeklyFlags() {
+  const nodes = Array.from(document.querySelectorAll(".js-past-weekly-flag"));
+  if (!nodes.length) {
+    return;
+  }
+
+  const concurrency = 8;
+  for (let i = 0; i < nodes.length; i += concurrency) {
+    const batch = nodes.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (node) => {
+        const playerID = node.getAttribute("data-player-id") || "";
+        const code = await fetchPastWeeklyCountryCode(playerID);
+        if (!code) {
+          return;
+        }
+
+        node.src = `images/Country%20Flags/${encodeURIComponent(code)}.png`;
+        node.alt = code;
+        node.style.display = "";
+        node.classList.remove("js-past-weekly-flag");
+      }),
+    );
+  }
+}
+
 function sanitiseWeek(value) {
   const week = Number.parseInt(String(value || "").trim(), 10);
   if (!Number.isFinite(week) || week <= 0) {
@@ -210,7 +281,7 @@ function applyWeekLinks(week) {
 function renderRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     pastBody.innerHTML =
-      "<tr><td colspan='4'>No weekly data found for this week.</td></tr>";
+      "<tr><td colspan='5'>No weekly data found for this week.</td></tr>";
     return;
   }
 
@@ -218,6 +289,12 @@ function renderRows(players) {
     .map((player, index) => {
       const rank = Number(player.rank) || 0;
       const username = escapeHtml(player.username || "-");
+      const countryCode = normalizeCountryCode(player.countryCode);
+      const flagHtml = countryCode
+        ? `<img class="name-flag-image" src="images/Country%20Flags/${encodeURIComponent(countryCode)}.png" alt="${escapeHtml(countryCode)}" loading="lazy" onerror="this.style.display='none'" />`
+        : player.playerID
+          ? `<img class="name-flag-image js-past-weekly-flag" data-player-id="${escapeHtml(player.playerID || "")}" src="" alt="" loading="lazy" style="display:none" onerror="this.style.display='none'" />`
+          : "";
       const medallions = formatNumber(player.medallions);
       const prizeBadge = prizeBadgeForWeekly(rank);
       const rowClass = rowColorClass(index, rank);
@@ -226,12 +303,17 @@ function renderRows(players) {
       <tr class="${rowClass}">
         <td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
         <td class="prize-cell">${renderPrizeBadgeCell(prizeBadge, rank)}</td>
+        <td class="country-flag-cell">${flagHtml}</td>
         <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
         <td>${medallions}</td>
       </tr>
     `;
     })
     .join("");
+
+  hydratePastWeeklyFlags().catch(() => {
+    // Keep flag cell empty if country lookup fails.
+  });
 }
 
 async function loadWeekly(forceRefresh = false) {
@@ -264,7 +346,7 @@ async function loadWeekly(forceRefresh = false) {
     pastError.textContent = error.message;
     pastError.hidden = false;
     pastBody.innerHTML =
-      "<tr><td colspan='4'>Failed to load weekly leaderboard.</td></tr>";
+      "<tr><td colspan='5'>Failed to load weekly leaderboard.</td></tr>";
   }
 }
 

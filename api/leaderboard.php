@@ -184,6 +184,15 @@ foreach ($weeklyEntries as $index => $entry) {
     $playerID   = $entry['userID']   ?? $entry['playerID'] ?? $entry['id']   ?? null;
     $medallions = $entry['score']    ?? $entry['medallions'] ?? $entry['value'] ?? 0;
     $username   = $entry['username'] ?? $entry['name'] ?? $entry['metadata'] ?? null;
+    $countryRaw = $entry['cc'] ?? $entry['countryCode'] ?? $entry['country'] ?? null;
+
+    $countryCode = null;
+    if (is_string($countryRaw)) {
+        $candidate = strtoupper(trim($countryRaw));
+        if (preg_match('/^[A-Z]{2}$/', $candidate) === 1) {
+            $countryCode = $candidate;
+        }
+    }
 
     if (!$playerID) continue;
 
@@ -194,6 +203,7 @@ foreach ($weeklyEntries as $index => $entry) {
         'prestige'   => isset($prestigeByPlayer[$playerID]) ? (int)$prestigeByPlayer[$playerID]['score'] : null,
         'prestigeRank' => isset($prestigeByPlayer[$playerID]) ? (int)$prestigeByPlayer[$playerID]['rank'] : null,
         'username'   => $username,   // may be null — fetched separately from profile
+        'countryCode' => $countryCode,
     ];
 }
 

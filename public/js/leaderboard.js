@@ -132,6 +132,8 @@ let currentView = "global";
 let currentCountry = "GLOBAL";
 let currentWeeklyRotationLabel = "";
 let currentWeeklyNumber = null;
+const globalNameFlagCountryCache = new Map();
+const globalNameFlagPending = new Map();
 
 function padTimerValue(value) {
   return String(Math.max(0, value)).padStart(2, "0");
@@ -155,7 +157,7 @@ function getWeeklyModeName(weekNumber) {
   }
 
   const size = WEEKLY_OLD_MODE_ROTATION.length;
-  const index = ((week - OLD_ROTATION_ANCHOR_WEEK) % size + size) % size;
+  const index = (((week - OLD_ROTATION_ANCHOR_WEEK) % size) + size) % size;
   return WEEKLY_OLD_MODE_ROTATION[index] || "";
 }
 
@@ -168,20 +170,22 @@ function getWeeklyArenaImageFile(weekNumber, weekName) {
 function renderWeekInfoCard(weekNumber, weekName, currentWeekEnd) {
   const period = getWeekPeriodByNumber(weekNumber, currentWeekEnd);
   const modeName = weekName || getWeeklyModeName(weekNumber) || "-";
-  const dateRange = period
-    ? formatWeeklyRange(period.start, period.end)
-    : "";
+  const dateRange = period ? formatWeeklyRange(period.start, period.end) : "";
   const imageFile = getWeeklyArenaImageFile(weekNumber, modeName);
   const imageSrc = imageFile
     ? `images/arenas/${encodeURIComponent(imageFile)}`
     : "";
 
   return `
-    ${imageSrc ? `
+    ${
+      imageSrc
+        ? `
       <span class="week-info-image-wrap">
         <img class="week-info-image" src="${imageSrc}" alt="${escapeHtml(modeName)} arena" loading="lazy" decoding="async" />
       </span>
-    ` : ""}
+    `
+        : ""
+    }
     <span class="week-info-copy">
       ${dateRange ? `<span class="week-info-date">${escapeHtml(dateRange)}</span>` : ""}
       <span class="week-info-mode">( ${escapeHtml(modeName)} )</span>
@@ -590,10 +594,79 @@ function renderPrizeBadgeCell(fileName, rank, label) {
   return `<img${regionAttrs} src="${src}" alt="${escapeHtml(alt)}" title="${escapeHtml(alt)}" loading="lazy" />`;
 }
 
+function normalizeCountryCode(value) {
+  const code = String(value || "")
+    .trim()
+    .toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
+async function fetchGlobalCountryCode(playerID) {
+  const id = String(playerID || "").trim();
+  if (!id) {
+    return null;
+  }
+
+  if (globalNameFlagCountryCache.has(id)) {
+    return globalNameFlagCountryCache.get(id);
+  }
+
+  if (globalNameFlagPending.has(id)) {
+    return globalNameFlagPending.get(id);
+  }
+
+  const request = (async () => {
+    try {
+      const data = await apiGet(`player.php?id=${encodeURIComponent(id)}`);
+      const code = normalizeCountryCode(data?.profile?.countryCode);
+      globalNameFlagCountryCache.set(id, code);
+      return code;
+    } catch (_) {
+      globalNameFlagCountryCache.set(id, null);
+      return null;
+    } finally {
+      globalNameFlagPending.delete(id);
+    }
+  })();
+
+  globalNameFlagPending.set(id, request);
+  return request;
+}
+
+async function hydrateGlobalNameFlags() {
+  if (currentCountry !== "GLOBAL") {
+    return;
+  }
+
+  const nodes = Array.from(document.querySelectorAll(".js-global-name-flag"));
+  if (!nodes.length) {
+    return;
+  }
+
+  const concurrency = 8;
+  for (let i = 0; i < nodes.length; i += concurrency) {
+    const batch = nodes.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (node) => {
+        const playerID = node.getAttribute("data-player-id") || "";
+        const code = await fetchGlobalCountryCode(playerID);
+        if (!code || currentCountry !== "GLOBAL") {
+          return;
+        }
+
+        node.src = `images/Country%20Flags/${encodeURIComponent(code)}.png`;
+        node.alt = code;
+        node.style.display = "";
+        node.classList.remove("js-global-name-flag");
+      }),
+    );
+  }
+}
+
 function renderRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     leaderboardBody.innerHTML =
-      "<tr><td colspan='4'>No leaderboard entries found.</td></tr>";
+      "<tr><td colspan='5'>No leaderboard entries found.</td></tr>";
     return;
   }
 
@@ -601,6 +674,18 @@ function renderRows(players) {
     .map((player, index) => {
       const rank = Number(player.rank) || 0;
       const username = escapeHtml(player.username || "-");
+      const countryCode = String(player.countryCode || "")
+        .trim()
+        .toUpperCase();
+      const showNameFlag =
+        currentCountry === "GLOBAL" && /^[A-Z]{2}$/.test(countryCode);
+      const needsAsyncFlag =
+        currentCountry === "GLOBAL" && !showNameFlag && !!player.playerID;
+      const countryFlagHtml = showNameFlag
+        ? `<img class="name-flag-image" src="images/Country%20Flags/${encodeURIComponent(countryCode)}.png" alt="${escapeHtml(countryCode)}" loading="lazy" onerror="this.style.display='none'" />`
+        : needsAsyncFlag
+          ? `<img class="name-flag-image js-global-name-flag" data-player-id="${escapeHtml(player.playerID || "")}" src="" alt="" loading="lazy" style="display:none" onerror="this.style.display='none'" />`
+          : "";
       const medallions = formatNumber(player.medallions);
       const prizeBadge = prizeBadgeForWeekly(rank);
       const prizeLabel =
@@ -613,6 +698,7 @@ function renderRows(players) {
 			<tr class="${rowClass}">
 				<td><span class="${rankClass(rank)}">${formatNumber(rank)}</span></td>
         <td class="prize-cell">${renderPrizeBadgeCell(prizeBadge, rank, prizeLabel)}</td>
+        <td class="country-flag-cell">${countryFlagHtml}</td>
         <td><a class="mini-link" href="player.html?id=${encodeURIComponent(player.playerID || "")}">${username}</a></td>
 				<td>${medallions}</td>
 			</tr>
@@ -622,7 +708,12 @@ function renderRows(players) {
 
   if (currentCountry !== "GLOBAL") {
     enhanceRegionalPrizeBadges();
+    return;
   }
+
+  hydrateGlobalNameFlags().catch(() => {
+    // Leave names without flags if country lookup fails.
+  });
 }
 
 function renderPrestigeRows(players) {
@@ -689,7 +780,7 @@ async function loadLeaderboard(forceRefresh = false) {
     currentWeeklyNumber = null;
     updateLeaderboardTimer();
     leaderboardBody.innerHTML =
-      "<tr><td colspan='4'>Failed to load leaderboard.</td></tr>";
+      "<tr><td colspan='5'>Failed to load leaderboard.</td></tr>";
     leaderboardMeta.textContent = "";
     leaderboardError.textContent = error.message;
     leaderboardError.hidden = false;

@@ -214,6 +214,19 @@
   font-weight: 700;
 }
 
+.country-flag-cell {
+  width: 64px;
+  text-align: center;
+}
+
+.name-flag-image {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
 .mini-link:hover {
   text-decoration: underline;
 }

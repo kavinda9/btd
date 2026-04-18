@@ -160,6 +160,7 @@ if ($wins !== null && $losses !== null) {
 // -- Clan info --
 $clan        = $profileData['clanName'] ?? ($profileData['clan']['name'] ?? null);
 $clanID      = $profileData['clanID']   ?? ($profileData['clan']['id'] ?? null) ?? ($profileData['GuildID'] ?? null);
+$countryCode = $profileData['CountryCode'] ?? $profileData['countryCode'] ?? $profileData['country'] ?? null;
 
 // -- Towers / loadout (if available) --
 $towers      = $profileData['towers']   ?? $profileData['loadout'] ?? null;
@@ -203,6 +204,7 @@ echo json_encode([
         'rank'       => $rank,
         'clan'       => $clan,
         'clanID'     => $clanID,
+        'countryCode' => $countryCode,
         'stats'      => [
             'wins'    => $wins,
             'losses'  => $losses,
