@@ -48,114 +48,174 @@ const BADGE_FILE_BY_KEY = {
 const COUNTRY_FLAG_FILE_BY_KEY = {
   ar: "AR",
   argentina: "AR",
-  au: "Australia",
-  australia: "Australia",
-  at: "Austria",
-  austria: "Austria",
-  be: "Belgium",
-  belgium: "Belgium",
-  br: "Brazil",
-  brazil: "Brazil",
-  bg: "Bulgaria",
-  bulgaria: "Bulgaria",
-  ca: "Canada",
-  canada: "Canada",
-  cl: "Chile",
-  chile: "Chile",
-  cn: "China",
-  china: "China",
-  co: "Colombia",
-  colombia: "Colombia",
-  hr: "Croatia",
-  croatia: "Croatia",
-  cz: "CzechRepublic",
-  czechrepublic: "CzechRepublic",
-  dk: "Denmark",
-  denmark: "Denmark",
-  ee: "Estonia",
-  estonia: "Estonia",
-  fi: "Finland",
-  finland: "Finland",
-  fr: "France",
-  france: "France",
+  au: "AU",
+  australia: "AU",
+  at: "AT",
+  austria: "AT",
+  be: "BE",
+  belgium: "BE",
+  br: "BR",
+  brazil: "BR",
+  bg: "BG",
+  bulgaria: "BG",
+  ca: "CA",
+  canada: "CA",
+  cl: "CL",
+  chile: "CL",
+  cn: "CN",
+  china: "CN",
+  co: "CO",
+  colombia: "CO",
+  hr: "HR",
+  croatia: "HR",
+  cz: "CZ",
+  czechrepublic: "CZ",
+  czechia: "CZ",
+  dk: "DK",
+  denmark: "DK",
+  ee: "EE",
+  estonia: "EE",
+  fi: "FI",
+  finland: "FI",
+  fr: "FR",
+  france: "FR",
   gb: "GB",
   uk: "GB",
   unitedkingdom: "GB",
-  de: "Germany",
-  germany: "Germany",
-  gr: "Greece",
-  greece: "Greece",
-  hk: "HongKong",
-  hongkong: "HongKong",
-  hu: "Hungary",
-  hungary: "Hungary",
-  id: "Indonesia",
-  indonesia: "Indonesia",
-  ie: "Ireland",
-  ireland: "Ireland",
-  il: "Israel",
-  israel: "Israel",
-  it: "Italy",
-  italy: "Italy",
-  ci: "IvoryCoast",
-  ivorycoast: "IvoryCoast",
-  cotedivoire: "IvoryCoast",
-  jp: "Japan",
-  japan: "Japan",
-  lv: "Latvia",
-  latvia: "Latvia",
-  lt: "Lithuania",
-  lithuania: "Lithuania",
-  my: "Malaysia",
-  malaysia: "Malaysia",
-  mx: "Mexico",
-  mexico: "Mexico",
-  nl: "Netherlands",
-  netherlands: "Netherlands",
-  nz: "NewZealand",
-  newzealand: "NewZealand",
-  no: "Norway",
-  norway: "Norway",
-  ph: "Philippines",
-  philippines: "Philippines",
-  pl: "Poland",
-  poland: "Poland",
-  pt: "Portugal",
-  portugal: "Portugal",
-  tw: "RepublicOfChina",
-  republicofchina: "RepublicOfChina",
-  ro: "Romania",
-  romania: "Romania",
-  ru: "Russia",
-  russia: "Russia",
-  sa: "SaudiArabia",
-  saudiarabia: "SaudiArabia",
-  sg: "Singapore",
-  singapore: "Singapore",
-  si: "Slovenia",
-  slovenia: "Slovenia",
-  za: "SouthAfrica",
-  southafrica: "SouthAfrica",
-  kr: "SouthKorea",
-  southkorea: "SouthKorea",
-  es: "Spain",
-  spain: "Spain",
-  se: "Sweden",
-  sweden: "Sweden",
-  ch: "Switzerland",
-  switzerland: "Switzerland",
-  th: "Thailand",
-  thailand: "Thailand",
-  tr: "Turkey",
-  turkey: "Turkey",
-  ua: "Ukraine",
-  ukraine: "Ukraine",
-  ae: "UnitedArabEmirates",
-  unitedarabemirates: "UnitedArabEmirates",
+  de: "DE",
+  germany: "DE",
+  gr: "GR",
+  greece: "GR",
+  hk: "HK",
+  hongkong: "HK",
+  hongkongsar: "HK",
+  hu: "HU",
+  hungary: "HU",
+  in: "IN",
+  india: "IN",
+  id: "ID",
+  indonesia: "ID",
+  ie: "IE",
+  ireland: "IE",
+  il: "IL",
+  israel: "IL",
+  it: "IT",
+  italy: "IT",
+  jp: "JP",
+  japan: "JP",
+  lv: "LV",
+  latvia: "LV",
+  lt: "LT",
+  lithuania: "LT",
+  lithunia: "LT",
+  my: "MY",
+  malaysia: "MY",
+  mx: "MX",
+  mexico: "MX",
+  nl: "NL",
+  netherlands: "NL",
+  nz: "NZ",
+  newzealand: "NZ",
+  no: "NO",
+  norway: "NO",
+  ph: "PH",
+  philippines: "PH",
+  pl: "PL",
+  poland: "PL",
+  pt: "PT",
+  portugal: "PT",
+  portugual: "PT",
+  tw: "TW",
+  taiwan: "TW",
+  ro: "RO",
+  romania: "RO",
+  ru: "RU",
+  russia: "RU",
+  sa: "SA",
+  saudiarabia: "SA",
+  sg: "SG",
+  singapore: "SG",
+  si: "SI",
+  slovenia: "SI",
+  za: "ZA",
+  southafrica: "ZA",
+  kr: "KR",
+  southkorea: "KR",
+  es: "ES",
+  spain: "ES",
+  se: "SE",
+  sweden: "SE",
+  ch: "CH",
+  switzerland: "CH",
+  th: "TH",
+  thailand: "TH",
+  tr: "TR",
+  turkey: "TR",
+  ua: "UA",
+  ukraine: "UA",
+  ae: "AE",
+  unitedarabemirates: "AE",
   us: "US",
   unitedstates: "US",
-  vn: "Vietnam",
-  vietnam: "Vietnam",
+  vn: "VN",
+  vietnam: "VN",
+};
+
+const COUNTRY_DISPLAY_NAME_BY_FILE = {
+  AR: "Argentina",
+  AU: "Australia",
+  AT: "Austria",
+  BE: "Belgium",
+  BR: "Brazil",
+  BG: "Bulgaria",
+  CA: "Canada",
+  CL: "Chile",
+  CN: "China",
+  CO: "Colombia",
+  HR: "Croatia",
+  CZ: "Czechia",
+  DK: "Denmark",
+  EE: "Estonia",
+  FI: "Finland",
+  FR: "France",
+  GB: "United Kingdom",
+  DE: "Germany",
+  GR: "Greece",
+  HK: "Hong-Kong",
+  HU: "Hungary",
+  IN: "India",
+  ID: "Indonesia",
+  IE: "Ireland",
+  IL: "Israel",
+  IT: "Italy",
+  JP: "Japan",
+  LV: "Latvia",
+  LT: "Lithunia",
+  MY: "Malaysia",
+  MX: "Mexico",
+  NL: "Netherlands",
+  NZ: "New Zealand",
+  NO: "Norway",
+  PH: "Philippines",
+  PL: "Poland",
+  PT: "Portugual",
+  TW: "Taiwan",
+  RO: "Romania",
+  RU: "Russia",
+  SA: "Saudi Arabia",
+  SG: "Singapore",
+  SI: "Slovenia",
+  ZA: "South Africa",
+  KR: "South Korea",
+  ES: "Spain",
+  SE: "Sweden",
+  CH: "Switzerland",
+  TH: "Thailand",
+  TR: "Turkey",
+  UA: "Ukraine",
+  AE: "United Arab Emirates",
+  US: "United States",
+  VN: "Vietnam",
 };
 
 function renderTableRows(target, rows) {
@@ -204,6 +264,24 @@ function resolveCountryFlagPath(countryValue) {
     return null;
   }
   return `images/Country%20Flags/${encodeURIComponent(file)}.png`;
+}
+
+function resolveCountryMeta(countryValue) {
+  const key = normalizeAssetKey(countryValue);
+  const file = COUNTRY_FLAG_FILE_BY_KEY[key];
+  if (!file) {
+    return null;
+  }
+
+  const displayName = COUNTRY_DISPLAY_NAME_BY_FILE[file];
+  if (!displayName) {
+    return null;
+  }
+
+  return {
+    displayName,
+    flagPath: `images/Country%20Flags/${encodeURIComponent(file)}.png`,
+  };
 }
 
 function resolveCountryFlagCandidatePaths(countryValue) {
@@ -315,15 +393,32 @@ function renderCountryLabel(countryValue) {
     return;
   }
 
-  const value = String(countryValue || "").trim() || "N/A";
-  const flagPath = resolveCountryFlagPath(value);
+  const value = String(countryValue || "").trim();
+  const countryMeta = resolveCountryMeta(value);
 
-  if (!flagPath) {
-    countryLabel.textContent = `Country: ${value}`;
+  if (!countryMeta) {
+    countryLabel.textContent = "Country - N/A";
     return;
   }
 
-  countryLabel.innerHTML = `Country: <span class="country-meta"><img src="${flagPath}" alt="${escapeHtml(value)}" class="country-badge-image" loading="lazy" /> ${escapeHtml(value)}</span>`;
+  countryLabel.textContent = "Country: ";
+  const countryMetaEl = document.createElement("span");
+  countryMetaEl.className = "country-meta";
+
+  const nameEl = document.createElement("span");
+  nameEl.textContent = countryMeta.displayName;
+
+  const flagEl = document.createElement("img");
+  flagEl.src = countryMeta.flagPath;
+  flagEl.alt = countryMeta.displayName;
+  flagEl.className = "country-badge-image";
+  flagEl.loading = "lazy";
+  flagEl.addEventListener("error", () => {
+    countryLabel.textContent = "Country - N/A";
+  });
+
+  countryMetaEl.append(nameEl, flagEl);
+  countryLabel.appendChild(countryMetaEl);
 }
 
 function renderBadges(rawProfile, countryValue) {
