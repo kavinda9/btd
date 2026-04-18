@@ -7,6 +7,15 @@ const openPastWeekly = document.getElementById("openPastWeekly");
 const openPastPrestige = document.getElementById("openPastPrestige");
 const openPastClans = document.getElementById("openPastClans");
 
+const destinationButtons = [openPastWeekly, openPastPrestige, openPastClans].filter(Boolean);
+
+function setActiveDestinationButton(activeButton) {
+  for (const button of destinationButtons) {
+    button.classList.toggle("btn-primary", button === activeButton);
+    button.classList.toggle("btn-ghost", button !== activeButton);
+  }
+}
+
 function sanitiseWeek(value) {
   const week = Number.parseInt(String(value || "").trim(), 10);
   if (!Number.isFinite(week) || week <= 0) {
@@ -59,6 +68,12 @@ if (loadWeekBtn) {
   });
 }
 
+for (const button of destinationButtons) {
+  button.addEventListener("click", () => {
+    setActiveDestinationButton(button);
+  });
+}
+
 if (weekInput) {
   weekInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -72,3 +87,4 @@ if (weekInput) {
 }
 
 applyWeekTargets();
+setActiveDestinationButton(null);

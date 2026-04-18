@@ -7,6 +7,78 @@ const pastMeta = document.getElementById("pastMeta");
 const pastError = document.getElementById("pastError");
 const pastBody = document.getElementById("pastBody");
 
+const WEEK_SECONDS = 7 * 24 * 60 * 60;
+const BIWEEK_SECONDS = 14 * 24 * 60 * 60;
+const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
+const PRESTIGE_RESET_BASE = Date.UTC(2017, 1, 15, 10, 0, 0);
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function getCurrentWeekNumber() {
+  return Math.max(1, Math.ceil((Date.now() - WEEKLY_RESET_BASE) / (WEEK_SECONDS * 1000)));
+}
+
+function getNextPrestigeResetTime() {
+  const now = Date.now();
+  const cycles = Math.ceil((now - PRESTIGE_RESET_BASE) / (BIWEEK_SECONDS * 1000));
+  return new Date(PRESTIGE_RESET_BASE + cycles * BIWEEK_SECONDS * 1000);
+}
+
+function getCurrentWeekStart() {
+  return new Date(WEEKLY_RESET_BASE + (getCurrentWeekNumber() - 1) * WEEK_SECONDS * 1000);
+}
+
+function formatPrestigeRange(startDate, endDate) {
+  const startYear = startDate.getUTCFullYear();
+  const endYear = endDate.getUTCFullYear();
+  const startMonthName = MONTH_NAMES[startDate.getUTCMonth()];
+  const endMonthName = MONTH_NAMES[endDate.getUTCMonth()];
+  const startDay = pad2(startDate.getUTCDate());
+  const endDay = pad2(endDate.getUTCDate());
+
+  if (startYear === endYear && startMonthName === endMonthName) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endDay}`;
+  }
+
+  if (startYear === endYear) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endMonthName} ${endDay}`;
+  }
+
+  return `${startYear} ${startMonthName} ${startDay} - ${endYear} ${endMonthName} ${endDay}`;
+}
+
+function getPrestigePeriodByNumber(weekNumber) {
+  const week = Number(weekNumber);
+  if (!Number.isFinite(week) || week <= 0) {
+    return null;
+  }
+
+  const currentWeekNumber = getCurrentWeekNumber();
+  const currentWeekStart = getCurrentWeekStart();
+  const offsetWeeks = week - currentWeekNumber;
+  const start = new Date(currentWeekStart.getTime() + offsetWeeks * BIWEEK_SECONDS * 1000);
+  const end = new Date(start.getTime() + BIWEEK_SECONDS * 1000);
+
+  return { start, end };
+}
+
+function getPrestigeWeekLabel(weekNumber) {
+  const period = getPrestigePeriodByNumber(weekNumber);
+  return period ? formatPrestigeRange(period.start, period.end) : "";
+}
+
 function rankClass(rank) {
   if (rank === 1) return "rank-pill rank-1";
   if (rank === 2) return "rank-pill rank-2";
@@ -71,6 +143,21 @@ function applyWeekLinks(week) {
   }
 }
 
+function updatePastMeta(week, weekRange) {
+  if (!pastMeta) {
+    return;
+  }
+
+  if (!weekRange) {
+    pastMeta.hidden = true;
+    pastMeta.textContent = "";
+    return;
+  }
+
+  pastMeta.hidden = false;
+  pastMeta.textContent = weekRange;
+}
+
 function renderRows(players) {
   if (!Array.isArray(players) || players.length === 0) {
     pastBody.innerHTML =
@@ -117,20 +204,12 @@ async function loadPrestige(forceRefresh = false) {
     params.set("refresh", "1");
   }
 
-  if (pastMeta) {
-    pastMeta.textContent = "";
-  }
-
   try {
     const data = await apiGet(`past_prestige.php?${params.toString()}`);
     renderRows(data.players || []);
-    if (pastMeta) {
-      pastMeta.textContent = "";
-    }
+    updatePastMeta(week, data.weekRange || getPrestigeWeekLabel(week));
   } catch (error) {
-    if (pastMeta) {
-      pastMeta.textContent = "";
-    }
+    updatePastMeta(week, getPrestigeWeekLabel(week));
     pastError.textContent = error.message;
     pastError.hidden = false;
     pastBody.innerHTML =
@@ -150,7 +229,7 @@ if (weekInput) {
   });
 
   const initialWeek =
-    sanitiseWeek(queryParam("week")) || sanitiseWeek(weekInput.value) || 569;
+    sanitiseWeek(queryParam("week")) || sanitiseWeek(weekInput.value) || getCurrentWeekNumber();
   weekInput.value = String(initialWeek);
 }
 

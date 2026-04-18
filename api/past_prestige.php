@@ -7,6 +7,11 @@
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/cache.php';
 
+const WEEK_SECONDS = 7 * 24 * 60 * 60;
+const BIWEEK_SECONDS = 14 * 24 * 60 * 60;
+const WEEKLY_RESET_BASE_UTC = '2015-12-16T10:00:00+00:00';
+const PRESTIGE_RESET_BASE_UTC = '2017-02-15T10:00:00+00:00';
+
 function parse_nk_entries_prestige(string $raw): array {
     $decoded = json_decode($raw, true);
     if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
@@ -43,6 +48,57 @@ function parse_nk_entries_prestige(string $raw): array {
 
 function normalize_prestige_score($rawScore): int {
     return intdiv((int) ($rawScore ?? 0), 10);
+}
+
+function format_range_from_timestamps(int $startTimestamp, int $endTimestamp): string {
+    $startYear = gmdate('Y', $startTimestamp);
+    $endYear = gmdate('Y', $endTimestamp);
+    $startMonth = gmdate('F', $startTimestamp);
+    $endMonth = gmdate('F', $endTimestamp);
+    $startDay = gmdate('d', $startTimestamp);
+    $endDay = gmdate('d', $endTimestamp);
+
+    if ($startYear === $endYear && $startMonth === $endMonth) {
+        return $startYear . ' ' . $startMonth . ' ' . $startDay . ' - ' . $endDay;
+    }
+
+    if ($startYear === $endYear) {
+        return $startYear . ' ' . $startMonth . ' ' . $startDay . ' - ' . $endMonth . ' ' . $endDay;
+    }
+
+    return $startYear . ' ' . $startMonth . ' ' . $startDay . ' - ' . $endYear . ' ' . $endMonth . ' ' . $endDay;
+}
+
+function get_current_week_number(): int {
+    $base = (new DateTimeImmutable(WEEKLY_RESET_BASE_UTC))->getTimestamp();
+    $current = time();
+
+    return max(1, (int) ceil(($current - $base) / WEEK_SECONDS));
+}
+
+function get_current_week_start(): int {
+    $base = (new DateTimeImmutable(WEEKLY_RESET_BASE_UTC))->getTimestamp();
+    $currentWeek = get_current_week_number();
+
+    return $base + (($currentWeek - 1) * WEEK_SECONDS);
+}
+
+function get_prestige_week_range(int $week): string {
+    $currentWeek = get_current_week_number();
+    $currentWeekStart = get_current_week_start();
+    $offsetWeeks = $week - $currentWeek;
+    $start = $currentWeekStart + ($offsetWeeks * BIWEEK_SECONDS);
+    $end = $start + BIWEEK_SECONDS;
+
+    return format_range_from_timestamps($start, $end);
+}
+
+function get_current_prestige_reset_end(): int {
+    $base = (new DateTimeImmutable(PRESTIGE_RESET_BASE_UTC))->getTimestamp();
+    $current = time();
+    $cycles = (int) ceil(($current - $base) / BIWEEK_SECONDS);
+
+    return $base + ($cycles * BIWEEK_SECONDS);
 }
 
 function derive_week_to_season_offset_prestige(): int {
@@ -118,8 +174,10 @@ foreach ($parsed['entries'] as $index => $entry) {
 
 echo json_encode([
     'success' => true,
+    'type' => 'prestige',
     'week' => $week,
     'season' => $season,
+    'weekRange' => get_prestige_week_range($week),
     'cached' => cache_is_valid($cacheFile),
     'count' => count($players),
     'players' => $players,

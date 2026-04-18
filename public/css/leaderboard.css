@@ -246,6 +246,11 @@
   margin-top: 1rem;
 }
 
+#pastMeta {
+  margin: 0.35rem 0;
+  line-height: 1.1;
+}
+
 .section-head {
   display: flex;
   align-items: end;
