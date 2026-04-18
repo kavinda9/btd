@@ -10,6 +10,8 @@ const regionModal = document.getElementById("regionModal");
 const regionModalClose = document.getElementById("regionModalClose");
 const regionFlagsGrid = document.getElementById("regionFlagsGrid");
 const leaderboardWeekInfo = document.getElementById("leaderboardWeekInfo");
+const weeklyPageEyebrow = document.querySelector(".page-head .eyebrow");
+const weeklyPageTitle = document.querySelector(".page-head h1");
 const prestigeLeaderboardBody = document.getElementById(
   "prestigeLeaderboardBody",
 );
@@ -122,6 +124,63 @@ const COUNTRY_OPTIONS = [
   { code: "US", flag: "🇺🇸" },
   { code: "VN", flag: "🇻🇳" },
 ];
+
+const COUNTRY_NAME_BY_CODE = {
+  AR: "Argentina",
+  AU: "Australia",
+  AT: "Austria",
+  BE: "Belgium",
+  BR: "Brazil",
+  BG: "Bulgaria",
+  CA: "Canada",
+  CL: "Chile",
+  CN: "China",
+  CO: "Colombia",
+  HR: "Croatia",
+  CZ: "Czech Republic",
+  DK: "Denmark",
+  EE: "Estonia",
+  FI: "Finland",
+  FR: "France",
+  DE: "Germany",
+  GR: "Greece",
+  HK: "Hong Kong",
+  HU: "Hungary",
+  IN: "India",
+  ID: "Indonesia",
+  IE: "Ireland",
+  IL: "Israel",
+  IT: "Italy",
+  JP: "Japan",
+  LV: "Latvia",
+  LT: "Lithuania",
+  MY: "Malaysia",
+  MX: "Mexico",
+  NL: "Netherlands",
+  NZ: "New Zealand",
+  NO: "Norway",
+  PH: "Philippines",
+  PL: "Poland",
+  PT: "Portugal",
+  RO: "Romania",
+  RU: "Russia",
+  SA: "Saudi Arabia",
+  SG: "Singapore",
+  SI: "Slovenia",
+  ZA: "South Africa",
+  KR: "South Korea",
+  ES: "Spain",
+  SE: "Sweden",
+  CH: "Switzerland",
+  TW: "Taiwan",
+  TH: "Thailand",
+  TR: "Turkey",
+  UA: "Ukraine",
+  AE: "United Arab Emirates",
+  GB: "United Kingdom",
+  US: "United States",
+  VN: "Vietnam",
+};
 
 const allowedCountries = new Set([
   "GLOBAL",
@@ -323,6 +382,34 @@ function setActiveButton(activeId) {
   });
 }
 
+function getCountryDisplayName(countryCode) {
+  const code = String(countryCode || "")
+    .trim()
+    .toUpperCase();
+
+  if (!code || code === "GLOBAL") {
+    return "Global";
+  }
+
+  return COUNTRY_NAME_BY_CODE[code] || code;
+}
+
+function updateWeeklyHeading() {
+  if (!weeklyPageEyebrow || !weeklyPageTitle) {
+    return;
+  }
+
+  if (currentView === "region" && currentCountry !== "GLOBAL") {
+    weeklyPageEyebrow.hidden = true;
+    weeklyPageTitle.textContent = `Leaderboard (${getCountryDisplayName(currentCountry)})`;
+    return;
+  }
+
+  weeklyPageEyebrow.hidden = false;
+  weeklyPageEyebrow.textContent = "Weekly Medallions";
+  weeklyPageTitle.textContent = "Leaderboard";
+}
+
 function showView(view) {
   currentView = view;
   const showPrestige = view === "prestige";
@@ -343,6 +430,7 @@ function showView(view) {
     setActiveButton("regionViewBtn");
   }
 
+  updateWeeklyHeading();
   updateStateQuery();
   updateLeaderboardTimer();
 }

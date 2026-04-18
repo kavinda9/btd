@@ -240,16 +240,58 @@ h1 {
 
 .arenas-card {
   margin-top: 1rem;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  color: #000000;
 }
 
-.home-section-head {
+.arenas-card,
+.arenas-card * {
+  font-family: "OETZTYP", sans-serif !important;
+}
+
+.arena-label-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.08rem;
+  padding: 0;
   margin-bottom: 0.45rem;
+}
+
+.arena-mode-media {
+  display: inline-flex;
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  background: #ffffff;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.arena-mode-image {
+  width: min(100%, 190px);
+  height: auto;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 0;
+  display: block;
+}
+
+.arena-label-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.06rem;
+  line-height: 1.08;
+  text-align: left;
+  align-items: flex-start;
+  flex: 1 1 auto;
 }
 
 .home-section-title {
   margin: 0;
   font-size: 1.9rem;
   line-height: 1;
+  color: #000000;
 }
 
 .arenas-grid {
@@ -260,19 +302,74 @@ h1 {
 }
 
 .arena-group {
-  margin-top: 1rem;
+  margin-top: 0.25rem;
+}
+
+.schedule-list {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.04rem;
+}
+
+.arena-week-nav {
+  margin-top: 1.2rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.arena-nav-btn {
+  font-family: "OETZTYP";
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111111;
+  background: #f4f4f4;
+  border: 1px solid rgba(0, 0, 0, 0.32);
+  border-radius: 8px;
+  padding: 0.34rem 0.72rem;
+  cursor: pointer;
+}
+
+.arena-nav-btn:hover:not(:disabled) {
+  background: #ebebeb;
+}
+
+.arena-nav-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.schedule-list .arena-line {
+  margin: 0;
+  padding: 0.16rem 0;
+  font-size: 150%;
+}
+
+.schedule-list .arena-line strong {
+  color: inherit !important;
+  display: inline-block;
+  min-width: 3.1rem;
+}
+
+.schedule-list .arena-line.arena-line--today {
+  background: #fff59d;
+  color: #000000 !important;
+  border-radius: 4px;
+  padding: 0.04rem 0.3rem;
 }
 
 .arena-group-title {
   margin: 0;
   font-size: 1.05rem;
-  color: var(--accent-2);
+  color: #8b6b00;
   letter-spacing: 0.03em;
 }
 
 .arena-sub-meta {
-  margin: 0.3rem 0 0;
+  margin: 0;
   font-size: 0.88rem;
+  color: #000000;
 }
 
 .arena-item {
@@ -291,6 +388,22 @@ h1 {
   margin: 0.5rem 0;
   color: var(--muted);
   font-size: 0.95rem;
+}
+
+.schedule-list .arena-line.arena-line--moab {
+  color: #000000 !important;
+}
+
+.schedule-list .arena-line.arena-line--bfb {
+  color: #ff0000 !important;
+}
+
+.schedule-list .arena-line.arena-line--zomg-a {
+  color: #75cc20 !important;
+}
+
+.schedule-list .arena-line.arena-line--zomg-b {
+  color: #175f1c !important;
 }
 
 .arena-tags {
@@ -398,6 +511,16 @@ h1 {
 
   .arenas-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .arena-label-panel {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.22rem;
+  }
+
+  .arena-label-copy {
+    width: 100%;
   }
 }
 

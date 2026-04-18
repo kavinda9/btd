@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/main.css?v=20260417u" />
+    <link rel="stylesheet" href="css/main.css?v=20260418r" />
   </head>
   <body>
     <div class="bg-orb orb-1"></div>
@@ -45,49 +45,50 @@
           Live data from Ninja Kiwi public static endpoints, cached through your
           PHP backend for speed and reliability.
         </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="leaderboard.html"
-            >View Weekly Leaderboard</a
+      </section>
+
+      <section class="card arenas-card reveal" aria-label="Arena schedule">
+        <div class="arena-label-panel">
+          <span class="arena-mode-media" id="currentArenaImageWrap" hidden>
+            <img
+              class="arena-mode-image"
+              id="currentArenaImage"
+              src=""
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </span>
+          <div class="arena-label-copy">
+            <h2 class="home-section-title">Arena Schedule</h2>
+            <h3 class="arena-group-title" id="currentArenaTitle">
+              Loading current week arena...
+            </h3>
+            <p class="arena-sub-meta" id="currentArenaMeta">
+              Fetching weekly arena mode and schedule.
+            </p>
+          </div>
+        </div>
+
+        <div class="arena-group" id="currentArenaGroup">
+          <div
+            class="schedule-list"
+            id="currentArenaSchedule"
+            aria-live="polite"
           >
-          <a class="btn btn-ghost" href="past_weeks.html">Past Weeks</a>
-          <a class="btn btn-ghost" href="clans.html">View Clan Leaderboard</a>
-          <a class="btn btn-ghost" href="player.html">Lookup</a>
+            <p class="arena-line">Loading schedule...</p>
+          </div>
         </div>
       </section>
 
-      <section class="stats-grid reveal" id="quickStats" aria-live="polite">
-        <article class="card stat-card">
-          <h2>Leaderboard Entries</h2>
-          <p class="stat" id="statCount">-</p>
-        </article>
-        <article class="card stat-card">
-          <h2>Top Medallions</h2>
-          <p class="stat" id="statTop">-</p>
-        </article>
-        <article class="card stat-card">
-          <h2>API Source</h2>
-          <p class="stat stat-small">priority-static-api.nkstatic.com</p>
-        </article>
-      </section>
-
-      <section class="grid-2 reveal">
-        <article class="card">
-          <h3>How It Works</h3>
-          <p>
-            Browser requests this site, PHP proxies the Ninja Kiwi static
-            endpoint, cached JSON is returned, and pages render clean
-            tables/cards.
-          </p>
-        </article>
-        <article class="card">
-          <h3>Limitations</h3>
-          <ul class="clean-list">
-            <li>No username search in official data</li>
-            <li>No guaranteed endpoint stability</li>
-            <li>Some profile fields can be missing</li>
-          </ul>
-        </article>
-      </section>
+      <div class="arena-week-nav" aria-label="Arena week navigation">
+        <button class="arena-nav-btn" id="arenaPrevWeekBtn" type="button">
+          Previous
+        </button>
+        <button class="arena-nav-btn" id="arenaNextWeekBtn" type="button">
+          Upcoming
+        </button>
+      </div>
     </main>
 
     <footer class="site-footer">
@@ -96,6 +97,6 @@
 
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/home.js?v=20260417c"></script>
+    <script src="js/home.js?v=20260418l"></script>
   </body>
 </html>
