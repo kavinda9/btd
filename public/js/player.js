@@ -11,6 +11,10 @@ const clanIdLabel = document.getElementById("clanIdLabel");
 const statsTableBody = document.getElementById("statsTableBody");
 const featuredBadgeWrap = document.getElementById("featuredBadgeWrap");
 const badgesWrap = document.getElementById("badgesWrap");
+const featuredBadgeSection = featuredBadgeWrap
+  ? featuredBadgeWrap.closest(".badges")
+  : null;
+const badgesSection = badgesWrap ? badgesWrap.closest(".badges") : null;
 const clanJumpWrap = document.getElementById("clanJumpWrap");
 const clanJumpLink = document.getElementById("clanJumpLink");
 
@@ -385,14 +389,26 @@ function renderPlayerProfile(data) {
   const leaderboards = profile.leaderboards || {};
   const weekly = leaderboards.weekly || {};
   const prestige = leaderboards.prestige || {};
-  const clan = leaderboards.clan || {};
   const rawProfile = data.raw || {};
+  const tournamentWinsRaw = Number(rawProfile.TournamentWins);
+  const tournamentLossesRaw = Number(rawProfile.TournamentLosses);
+  const hasTournamentWins = Number.isFinite(tournamentWinsRaw);
+  const hasTournamentLosses = Number.isFinite(tournamentLossesRaw);
+  const tournamentWins = hasTournamentWins ? tournamentWinsRaw : null;
+  const tournamentLosses = hasTournamentLosses ? tournamentLossesRaw : null;
+  const tournamentPlayed =
+    hasTournamentWins || hasTournamentLosses
+      ? (hasTournamentWins ? tournamentWinsRaw : 0) +
+        (hasTournamentLosses ? tournamentLossesRaw : 0)
+      : null;
 
   usernameEl.textContent = profile.username || "Unknown";
   playerIdLabel.textContent = `Player ID: ${data.playerID || "Unknown"}`;
   renderCountryLabel(rawProfile.CountryCode);
   clanIdLabel.textContent = `Guild ID: ${profile.clanID || "None"}`;
-  avatarEl.textContent = createAvatarInitials(profile.username || "Unknown");
+  avatarEl.classList.remove("avatar--with-clan-image");
+  avatarEl.classList.add("avatar--with-image");
+  avatarEl.textContent = "";
 
   renderTableRows(statsTableBody, [
     {
@@ -414,14 +430,10 @@ function renderPlayerProfile(data) {
       label: "Medallions this Week",
       value: formatNumber(rawProfile.MedallionWinsWeekly),
     },
+    { label: "Tournament Played", value: formatNumber(tournamentPlayed) },
+    { label: "Tournament Wins", value: formatNumber(tournamentWins) },
+    { label: "Tournament Losses", value: formatNumber(tournamentLosses) },
     { label: "Clan", value: profile.clan || "-" },
-    {
-      label: "Clan Leaderboard",
-      value:
-        clan.rank === null || clan.rank === undefined
-          ? "-"
-          : `#${formatNumber(clan.rank)} (${formatNumber(clan.score)})`,
-    },
     {
       label: "Weekly Leaderboard",
       value:
@@ -436,10 +448,17 @@ function renderPlayerProfile(data) {
           ? "-"
           : `#${formatNumber(prestige.rank)} (${formatNumber(prestige.score)})`,
     },
-    { label: "Cached", value: data.cached ? "Yes" : "No" },
   ]);
 
   renderBadges(rawProfile, rawProfile.CountryCode);
+
+  if (featuredBadgeSection) {
+    featuredBadgeSection.hidden = false;
+  }
+
+  if (badgesSection) {
+    badgesSection.hidden = false;
+  }
 
   if (profile.clanID && clanJumpWrap && clanJumpLink) {
     clanJumpLink.href = `clans.html?clanID=${encodeURIComponent(profile.clanID)}`;
@@ -460,7 +479,9 @@ function renderGuildProfile(data) {
   playerIdLabel.textContent = `Guild ID: ${guildID}`;
   renderCountryLabel(guild.country);
   clanIdLabel.textContent = `Owner: ${guild.ownerName || guild.owner || "-"}`;
-  avatarEl.textContent = createAvatarInitials(guildName);
+  avatarEl.classList.remove("avatar--with-image");
+  avatarEl.classList.add("avatar--with-clan-image");
+  avatarEl.textContent = "";
 
   renderTableRows(statsTableBody, [
     { label: "Owner", value: guild.ownerName || guild.owner || "-" },
@@ -481,17 +502,15 @@ function renderGuildProfile(data) {
             ? "Yes"
             : "No",
     },
-    { label: "Country", value: guild.country || "-" },
     { label: "Cached", value: data.cached ? "Yes" : "No" },
   ]);
 
-  if (featuredBadgeWrap) {
-    featuredBadgeWrap.innerHTML =
-      "<span class='muted'>No featured badge.</span>";
+  if (featuredBadgeSection) {
+    featuredBadgeSection.hidden = true;
   }
 
-  if (badgesWrap) {
-    badgesWrap.innerHTML = "<span class='muted'>No badges found.</span>";
+  if (badgesSection) {
+    badgesSection.hidden = true;
   }
 
   if (clanJumpWrap) {

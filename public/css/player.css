@@ -79,6 +79,22 @@ a {
   flex-shrink: 0;
 }
 
+.avatar--with-image {
+  background-image: url("../images/extra/profile.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: transparent;
+}
+
+.avatar--with-clan-image {
+  background-image: url("../images/extra/clans.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: transparent;
+}
+
 .user-info h2 {
   margin: 0;
   color: #ddb6e6;
