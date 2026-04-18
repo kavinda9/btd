@@ -144,15 +144,33 @@ body {
 .hero {
   padding: 3.3rem 1.2rem 2.2rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1.5rem;
+}
+
+.hero-brand-media {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.hero-brand-image {
+  display: block;
+  width: auto;
+  height: clamp(96px, 10vw, 122px);
+  max-width: min(100%, 220px);
+  object-fit: contain;
 }
 
 .hero-copy {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 62ch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .eyebrow {
@@ -183,6 +201,7 @@ h1 {
   max-width: 56ch;
   color: var(--muted);
   line-height: 1.65;
+  align-self: flex-start;
 }
 
 .hero-actions {
@@ -274,6 +293,19 @@ h1 {
   object-fit: contain;
 }
 
+.hero-image-btn.is-spinning img {
+  animation: hero-spin 1s linear;
+}
+
+@keyframes hero-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(720deg);
+  }
+}
+
 .hero-button-label {
   margin: 0;
   font-family: "OETZTYP", sans-serif !important;
@@ -288,6 +320,12 @@ h1 {
   .hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .hero-brand-image {
+    width: auto;
+    height: clamp(88px, 18vw, 108px);
+    max-width: min(100%, 180px);
   }
 
   .hero-copy {

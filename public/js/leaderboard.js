@@ -833,7 +833,7 @@ function renderPrestigeRows(players) {
 
 async function loadLeaderboard(forceRefresh = false) {
   leaderboardError.hidden = true;
-  leaderboardMeta.textContent = "Loading...";
+  leaderboardMeta.textContent = "";
   updateLeaderboardTimer();
 
   const country = currentCountry;
@@ -861,8 +861,7 @@ async function loadLeaderboard(forceRefresh = false) {
 
     updateLeaderboardTimer();
     renderRows(players);
-    const regionLabel = country === "GLOBAL" ? "GLOBAL" : `REGION ${country}`;
-    leaderboardMeta.textContent = `${regionLabel} | Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
+    leaderboardMeta.textContent = "";
   } catch (error) {
     currentWeeklyRotationLabel = "";
     currentWeeklyNumber = null;
@@ -885,7 +884,7 @@ async function loadPrestigeLeaderboard(forceRefresh = false) {
   }
 
   prestigeLeaderboardError.hidden = true;
-  prestigeLeaderboardMeta.textContent = "Loading...";
+  prestigeLeaderboardMeta.textContent = "";
   updateLeaderboardTimer();
 
   const path = forceRefresh
@@ -895,7 +894,7 @@ async function loadPrestigeLeaderboard(forceRefresh = false) {
   try {
     const data = await apiGet(path);
     renderPrestigeRows(data.players || []);
-    prestigeLeaderboardMeta.textContent = `Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
+    prestigeLeaderboardMeta.textContent = "";
   } catch (error) {
     prestigeLeaderboardBody.innerHTML =
       "<tr><td colspan='4'>Failed to load prestige leaderboard.</td></tr>";

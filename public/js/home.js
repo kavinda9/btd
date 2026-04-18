@@ -4,6 +4,12 @@
   const scheduleEl = document.getElementById("currentArenaSchedule");
   const imageWrapEl = document.getElementById("currentArenaImageWrap");
   const imageEl = document.getElementById("currentArenaImage");
+  const discordButtonEl = document.querySelector(
+    ".hero-button-group:first-child .hero-image-btn",
+  );
+  const supportButtonEl = document.querySelector(
+    ".hero-button-group-offset .hero-image-btn",
+  );
   if (!titleEl || !metaEl || !scheduleEl || !imageWrapEl || !imageEl) {
     return;
   }
@@ -281,6 +287,40 @@
   const prevWeekBtn = document.getElementById("arenaPrevWeekBtn");
   const nextWeekBtn = document.getElementById("arenaNextWeekBtn");
 
+  const spinButton = (buttonEl) => {
+    if (!buttonEl) {
+      return;
+    }
+
+    const wasSpinning = buttonEl.classList.contains("is-spinning");
+    buttonEl.classList.remove("is-spinning");
+    if (wasSpinning) {
+      void buttonEl.offsetWidth;
+    }
+    buttonEl.classList.add("is-spinning");
+    window.setTimeout(() => {
+      buttonEl.classList.remove("is-spinning");
+    }, 1000);
+  };
+
+  const startButtonSpinLoop = () => {
+    if (!discordButtonEl || !supportButtonEl) {
+      return;
+    }
+
+    const runDiscord = () => {
+      spinButton(discordButtonEl);
+      window.setTimeout(runSupport, 3000);
+    };
+
+    const runSupport = () => {
+      spinButton(supportButtonEl);
+      window.setTimeout(runDiscord, 3000);
+    };
+
+    runDiscord();
+  };
+
   const updateWeekNavigationState = () => {
     if (prevWeekBtn) {
       prevWeekBtn.disabled = selectedWeekNumber <= 1;
@@ -322,6 +362,7 @@
       selectedWeekNumber = weekNumber;
       baselineModeName = modeName;
       renderSelectedWeek();
+      startButtonSpinLoop();
     } catch (error) {
       renderUnavailable(
         error instanceof Error ? error.message : "Request failed.",
