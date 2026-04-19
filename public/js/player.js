@@ -19,6 +19,10 @@ const clanJumpWrap = document.getElementById("clanJumpWrap");
 const clanJumpLink = document.getElementById("clanJumpLink");
 
 const LOCAL_BADGE_KEYS = new Set(["localbronze", "localsilver", "localgold"]);
+const PRESTIGE_OVERLAY_CANDIDATE_PATHS = [
+  "images/badges/prestige.png",
+  "images/badges/prestge.png",
+];
 
 const BADGE_FILE_BY_KEY = {
   blackdiamond: "black_diamond",
@@ -247,6 +251,8 @@ const CLAN_ICON_FILE_BY_NUMBER = {
 };
 
 let guildAvatarRequestToken = 0;
+const badgeImageCache = new Map();
+const badgeComposeCache = new Map();
 
 function extractClanSymbolFromText(value) {
   const text = String(value || "");
@@ -436,6 +442,187 @@ function isRegionalBadgeId(badgeId) {
   return LOCAL_BADGE_KEYS.has(normalizeAssetKey(badgeId));
 }
 
+function isPrestigeBadgeId(badgeId) {
+  return normalizeAssetKey(badgeId).endsWith("prestige");
+}
+
+function loadBadgeImage(src) {
+  if (!src) {
+    return Promise.reject(new Error("Missing image source"));
+  }
+
+  if (badgeImageCache.has(src)) {
+    return badgeImageCache.get(src);
+  }
+
+  const promise = new Promise((resolve, reject) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
+  });
+
+  badgeImageCache.set(src, promise);
+  return promise;
+}
+
+async function ensurePrestigeFontLoaded() {
+  if (!document.fonts || typeof document.fonts.load !== "function") {
+    return;
+  }
+
+  try {
+    await document.fonts.load('24px "OETZTYP"');
+  } catch (_) {
+    // Fall back to whatever font is available.
+  }
+}
+
+function drawPrestigeRank(ctx, width, height, rankText) {
+  const text = String(rankText || "").trim();
+  if (!text) {
+    return;
+  }
+
+  const maxWidth = Math.round(width * 0.82);
+  const minFontSize = Math.max(4, Math.round(height * 0.09));
+  let fontSize = Math.max(minFontSize, Math.round(height * 0.18));
+
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  while (fontSize >= minFontSize) {
+    ctx.font = `${fontSize}px "OETZTYP", sans-serif`;
+    if (ctx.measureText(text).width <= maxWidth) {
+      break;
+    }
+    fontSize -= 1;
+  }
+
+  const x = Math.round(width / 2);
+  const y = Math.round(height * 0.86);
+  ctx.fillText(text, x, y);
+}
+
+async function mergeBadgeOverlay(baseSrc, overlaySrc, options) {
+  const opts = options || {};
+  const offsetY = Number(opts.offsetY) || 0;
+  const scale = Number(opts.scale) || 1;
+  const rankText = String(opts.rankText || "").trim();
+  const key = JSON.stringify([baseSrc, overlaySrc, offsetY, scale, rankText]);
+  if (badgeComposeCache.has(key)) {
+    return badgeComposeCache.get(key);
+  }
+
+  const promise = (async () => {
+    const [baseImg, overlayImg] = await Promise.all([
+      loadBadgeImage(baseSrc),
+      loadBadgeImage(overlaySrc),
+    ]);
+
+    await ensurePrestigeFontLoaded();
+
+    const baseW = Math.max(1, baseImg.naturalWidth || baseImg.width || 64);
+    const baseH = Math.max(1, baseImg.naturalHeight || baseImg.height || 64);
+    const overlayW =
+      Math.max(1, overlayImg.naturalWidth || overlayImg.width || 64) * scale;
+    const overlayH =
+      Math.max(1, overlayImg.naturalHeight || overlayImg.height || 64) * scale;
+
+    const width = Math.max(baseW, overlayW);
+    const height = Math.max(baseH, overlayH) + Math.max(0, Math.round(offsetY));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return null;
+    }
+
+    const baseX = Math.round((width - baseW) / 2);
+    const baseY = height - baseH;
+    const overlayX = Math.round((width - overlayW) / 2);
+    const overlayY = height - overlayH + Math.round(offsetY);
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(baseImg, baseX, baseY, baseW, baseH);
+    ctx.drawImage(overlayImg, overlayX, overlayY, overlayW, overlayH);
+
+    drawPrestigeRank(ctx, width, height, rankText);
+
+    return canvas.toDataURL("image/png");
+  })();
+
+  badgeComposeCache.set(key, promise);
+  return promise;
+}
+
+async function mergeBadgeOverlayWithFallback(
+  baseSrc,
+  candidateOverlaySources,
+  options,
+) {
+  const uniqueCandidates = [
+    ...new Set((candidateOverlaySources || []).filter(Boolean)),
+  ];
+
+  for (const overlaySrc of uniqueCandidates) {
+    try {
+      const merged = await mergeBadgeOverlay(baseSrc, overlaySrc, options);
+      if (merged) {
+        return merged;
+      }
+    } catch (_) {
+      // Try next candidate path.
+    }
+  }
+
+  return null;
+}
+
+async function applyPrestigeMergeToImage(imgEl) {
+  if (!imgEl) {
+    return;
+  }
+
+  const shouldMerge = imgEl.getAttribute("data-merge-prestige") === "1";
+  const baseSrc = imgEl.getAttribute("data-base-src") || "";
+  if (!shouldMerge || !baseSrc) {
+    return;
+  }
+
+  const rankValue = imgEl.getAttribute("data-prestige-rank") || "";
+
+  const mergedSrc = await mergeBadgeOverlayWithFallback(
+    baseSrc,
+    PRESTIGE_OVERLAY_CANDIDATE_PATHS,
+    {
+      offsetY: 4,
+      scale: 1.2,
+      rankText:
+        Number.isFinite(Number(rankValue)) && Number(rankValue) > 0
+          ? formatNumber(Number(rankValue))
+          : "",
+    },
+  );
+
+  if (mergedSrc) {
+    imgEl.src = mergedSrc;
+  }
+}
+
+function enhancePrestigeBadges() {
+  const imageNodes = document.querySelectorAll(".js-prestige-badge-image");
+  imageNodes.forEach((node) => {
+    applyPrestigeMergeToImage(node).catch(() => {
+      // Keep base badge image if merge fails.
+    });
+  });
+}
+
 function getRegionalMergeOptions(badgeId, countryValue) {
   const cfg = window.RegionalBadgePositionConfig || {};
   const defaults = cfg.defaults || {};
@@ -556,18 +743,21 @@ function renderBadges(rawProfile, countryValue) {
   const badges = Array.isArray(source.Badges) ? source.Badges : [];
 
   if (featured && featured.id && featuredBadgeWrap) {
+    const featuredIsPrestige = isPrestigeBadgeId(featured.id);
     const rawScore = Number(featured.score) || 0;
-    const score = String(featured.id).toLowerCase().includes("prestige")
-      ? rawScore / 10
-      : rawScore;
+    const score = featuredIsPrestige ? rawScore / 10 : rawScore;
     const featuredImg = resolveBadgeImagePath(featured.id);
     const featuredAttr = escapeHtml(featured.id);
+    const featuredPrestigeRankRaw =
+      Number.isFinite(Number(featured.rank)) && Number(featured.rank) > 0
+        ? String(Math.trunc(Number(featured.rank)) + 1)
+        : "";
 
     const featuredCountry = String(featured.cc || "").trim();
 
     featuredBadgeWrap.innerHTML = `
       <span class="badge" title="${escapeHtml(featured.id)} (Rank: ${formatNumber((Number(featured.rank) || 0) + 1)}, Score: ${formatNumber(score)})">
-        ${featuredImg ? `<img src="${featuredImg}" data-base-src="${featuredImg}" data-badge-id="${featuredAttr}" data-country="${escapeHtml(featuredCountry)}" alt="${escapeHtml(featured.id)}" class="badge-image js-regional-badge-image" loading="lazy" />` : `<span>${escapeHtml(featured.id)}</span>`}
+        ${featuredImg ? `<img src="${featuredImg}" data-base-src="${featuredImg}" data-badge-id="${featuredAttr}" data-country="${escapeHtml(featuredCountry)}" data-merge-prestige="${featuredIsPrestige ? "1" : "0"}" data-prestige-rank="${escapeHtml(featuredPrestigeRankRaw)}" alt="${escapeHtml(featured.id)}" class="badge-image js-regional-badge-image js-prestige-badge-image" loading="lazy" />` : `<span>${escapeHtml(featured.id)}</span>`}
       </span>
     `;
   } else if (featuredBadgeWrap) {
@@ -587,23 +777,27 @@ function renderBadges(rawProfile, countryValue) {
   badgesWrap.innerHTML = badges
     .map((badge) => {
       const badgeId = String(badge.id || "");
+      const badgeIsPrestige = isPrestigeBadgeId(badgeId);
       const rawScore = Number(badge.score) || 0;
-      const score = badgeId.toLowerCase().includes("prestige")
-        ? rawScore / 10
-        : rawScore;
+      const score = badgeIsPrestige ? rawScore / 10 : rawScore;
       const rank = (Number(badge.rank) || 0) + 1;
       const badgeImg = resolveBadgeImagePath(badgeId);
       const badgeAttr = escapeHtml(badgeId);
       const badgeCountry = String(badge.cc || "").trim();
+      const badgePrestigeRankRaw =
+        Number.isFinite(Number(badge.rank)) && Number(badge.rank) > 0
+          ? String(Math.trunc(Number(badge.rank)) + 1)
+          : "";
 
       return `
         <span class="badge" title="${escapeHtml(badgeId)} (Rank: ${formatNumber(rank)}, Score: ${formatNumber(score)})">
-          ${badgeImg ? `<img src="${badgeImg}" data-base-src="${badgeImg}" data-badge-id="${badgeAttr}" data-country="${escapeHtml(badgeCountry)}" alt="${escapeHtml(badgeId)}" class="badge-image js-regional-badge-image" loading="lazy" />` : `<span>${escapeHtml(badgeId)}</span>`}
+          ${badgeImg ? `<img src="${badgeImg}" data-base-src="${badgeImg}" data-badge-id="${badgeAttr}" data-country="${escapeHtml(badgeCountry)}" data-merge-prestige="${badgeIsPrestige ? "1" : "0"}" data-prestige-rank="${escapeHtml(badgePrestigeRankRaw)}" alt="${escapeHtml(badgeId)}" class="badge-image js-regional-badge-image js-prestige-badge-image" loading="lazy" />` : `<span>${escapeHtml(badgeId)}</span>`}
         </span>
       `;
     })
     .join("");
 
+  enhancePrestigeBadges();
   enhanceRegionalBadges(countryValue);
 }
 
