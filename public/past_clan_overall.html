@@ -17,7 +17,7 @@
     <link rel="icon" type="image/png" href="images/extra/blueblood.png" />
     <link rel="apple-touch-icon" href="images/extra/blueblood.png" />
     <link rel="stylesheet" href="css/main.css?v=20260417u" />
-    <link rel="stylesheet" href="css/leaderboard.css?v=20260417v" />
+    <link rel="stylesheet" href="css/leaderboard.css?v=20260419f" />
   </head>
   <body>
     <div class="bg-orb orb-1"></div>
@@ -35,7 +35,7 @@
         <a href="index.html">Home</a>
         <a href="leaderboard.html">Leaderboard</a>
         <a class="active" href="past_weeks.html">Past Weeks</a>
-        <a href="clans.html">Clans</a>
+        <a href="clans_v2.html?v=20260419t">Clans</a>
         <a href="player.html">Lookup</a>
       </nav>
     </header>
@@ -78,14 +78,14 @@
             <a
               class="btn btn-primary"
               id="openPastClans"
-              href="past_clan_overall.html?week=569"
+              href="past_clan_overall.html?v=20260419c&week=569"
               >Clan Overall</a
             >
           </div>
         </div>
       </section>
 
-      <section class="card reveal">
+      <section class="card reveal" id="pastInfoCard" hidden>
         <p class="muted" id="pastMeta" hidden></p>
         <p class="error" id="pastError" hidden></p>
       </section>
@@ -93,13 +93,6 @@
       <section class="card reveal leaderboard-section">
         <div class="table-wrap">
           <table class="lb-table" aria-live="polite">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Name</th>
-                <th>Medallions</th>
-              </tr>
-            </thead>
             <tbody id="pastBody">
               <tr>
                 <td colspan="3">Loading clan leaderboard...</td>
@@ -116,7 +109,8 @@
 
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/past_clan_overall.js?v=20260417b"></script>
+    <script src="js/main.js?v=20260419s"></script>
+    <script src="js/clan-badge-composer.js?v=20260419e"></script>
+    <script src="js/past_clan_overall.js?v=20260419c"></script>
   </body>
 </html>

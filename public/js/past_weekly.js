@@ -274,7 +274,7 @@ function applyWeekLinks(week) {
     openPastPrestige.href = `past_prestige.html?week=${encodeURIComponent(week)}`;
   }
   if (openPastClans) {
-    openPastClans.href = `past_clan_overall.html?week=${encodeURIComponent(week)}`;
+    openPastClans.href = `past_clan_overall.html?v=20260419c&week=${encodeURIComponent(week)}`;
   }
 }
 

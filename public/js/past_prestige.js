@@ -27,17 +27,24 @@ const MONTH_NAMES = [
 ];
 
 function getCurrentWeekNumber() {
-  return Math.max(1, Math.ceil((Date.now() - WEEKLY_RESET_BASE) / (WEEK_SECONDS * 1000)));
+  return Math.max(
+    1,
+    Math.ceil((Date.now() - WEEKLY_RESET_BASE) / (WEEK_SECONDS * 1000)),
+  );
 }
 
 function getNextPrestigeResetTime() {
   const now = Date.now();
-  const cycles = Math.ceil((now - PRESTIGE_RESET_BASE) / (BIWEEK_SECONDS * 1000));
+  const cycles = Math.ceil(
+    (now - PRESTIGE_RESET_BASE) / (BIWEEK_SECONDS * 1000),
+  );
   return new Date(PRESTIGE_RESET_BASE + cycles * BIWEEK_SECONDS * 1000);
 }
 
 function getCurrentWeekStart() {
-  return new Date(WEEKLY_RESET_BASE + (getCurrentWeekNumber() - 1) * WEEK_SECONDS * 1000);
+  return new Date(
+    WEEKLY_RESET_BASE + (getCurrentWeekNumber() - 1) * WEEK_SECONDS * 1000,
+  );
 }
 
 function formatPrestigeRange(startDate, endDate) {
@@ -68,7 +75,9 @@ function getPrestigePeriodByNumber(weekNumber) {
   const currentWeekNumber = getCurrentWeekNumber();
   const currentWeekStart = getCurrentWeekStart();
   const offsetWeeks = week - currentWeekNumber;
-  const start = new Date(currentWeekStart.getTime() + offsetWeeks * BIWEEK_SECONDS * 1000);
+  const start = new Date(
+    currentWeekStart.getTime() + offsetWeeks * BIWEEK_SECONDS * 1000,
+  );
   const end = new Date(start.getTime() + BIWEEK_SECONDS * 1000);
 
   return { start, end };
@@ -139,7 +148,7 @@ function applyWeekLinks(week) {
     openPastPrestige.href = `past_prestige.html?week=${encodeURIComponent(week)}`;
   }
   if (openPastClans) {
-    openPastClans.href = `past_clan_overall.html?week=${encodeURIComponent(week)}`;
+    openPastClans.href = `past_clan_overall.html?v=20260419c&week=${encodeURIComponent(week)}`;
   }
 }
 
@@ -229,7 +238,9 @@ if (weekInput) {
   });
 
   const initialWeek =
-    sanitiseWeek(queryParam("week")) || sanitiseWeek(weekInput.value) || getCurrentWeekNumber();
+    sanitiseWeek(queryParam("week")) ||
+    sanitiseWeek(weekInput.value) ||
+    getCurrentWeekNumber();
   weekInput.value = String(initialWeek);
 }
 

@@ -231,6 +231,57 @@
   text-decoration: underline;
 }
 
+.clan-name-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.clan-name-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.clan-badge-slot {
+  width: 45px;
+  height: 45px;
+  flex: 0 0 45px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clan-badge-image {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.clan-badge-composite {
+  width: 45px;
+  height: 45px;
+  display: inline-block;
+  position: relative;
+}
+
+.clan-badge-layer {
+  width: 45px;
+  height: 45px;
+  position: absolute;
+  inset: 0;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.clan-badge-layer--shield {
+  z-index: 1;
+}
+
+.clan-badge-layer--icon {
+  z-index: 2;
+}
+
 .prestige-score {
   display: inline-block;
   font-weight: 700;

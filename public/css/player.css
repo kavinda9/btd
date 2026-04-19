@@ -95,6 +95,20 @@ a {
   color: transparent;
 }
 
+.avatar--clan-composite {
+  background: transparent;
+  border: 1px solid rgba(221, 182, 230, 0.35);
+  padding: 2px;
+}
+
+.avatar-clan-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+}
+
 .user-info h2 {
   margin: 0;
   color: #ddb6e6;

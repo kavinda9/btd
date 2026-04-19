@@ -7,7 +7,11 @@ const openPastWeekly = document.getElementById("openPastWeekly");
 const openPastPrestige = document.getElementById("openPastPrestige");
 const openPastClans = document.getElementById("openPastClans");
 
-const destinationButtons = [openPastWeekly, openPastPrestige, openPastClans].filter(Boolean);
+const destinationButtons = [
+  openPastWeekly,
+  openPastPrestige,
+  openPastClans,
+].filter(Boolean);
 
 function setActiveDestinationButton(activeButton) {
   for (const button of destinationButtons) {
@@ -53,7 +57,7 @@ function applyWeekTargets() {
     openPastPrestige.href = `past_prestige.html?week=${encodeURIComponent(week)}`;
   }
   if (openPastClans) {
-    openPastClans.href = `past_clan_overall.html?week=${encodeURIComponent(week)}`;
+    openPastClans.href = `past_clan_overall.html?v=20260419c&week=${encodeURIComponent(week)}`;
   }
 
   updateWeekQuery(week);

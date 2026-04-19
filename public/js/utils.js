@@ -308,8 +308,9 @@ async function getGuildNormalized(guildID, options = {}) {
 
   const ownerId = String(payload.owner || payload.ownerID || "");
   let ownerName = ownerId || null;
+  const skipOwnerLookup = options && options.skipOwnerLookup === true;
 
-  if (ownerId) {
+  if (ownerId && !skipOwnerLookup) {
     const ownerPayload = unwrapNkPayload(
       await nkGetOptional(
         `2/${encodeURIComponent(ownerId)}/PublicProfile.save`,
@@ -325,16 +326,58 @@ async function getGuildNormalized(guildID, options = {}) {
   }
 
   let tagline = payload.tagline || null;
+  let symbolShield = null;
+  let symbolIcon = null;
+  let symbolLayers = [];
+
+  const collectSymbolFromValue = (value) => {
+    const text = String(value || "");
+    if (!text) {
+      return;
+    }
+
+    const matches = text.match(/Shield_\d+|Icon_\d+(?:_[A-Za-z0-9]+)?/gi);
+    if (!Array.isArray(matches) || !matches.length) {
+      return;
+    }
+
+    matches.forEach((layer) => {
+      if (!layer) {
+        return;
+      }
+
+      symbolLayers.push(layer);
+      if (!symbolShield && /^Shield_\d+/i.test(layer)) {
+        symbolShield = layer;
+        return;
+      }
+
+      if (!symbolIcon && /^Icon_\d+/i.test(layer)) {
+        symbolIcon = layer;
+      }
+    });
+  };
+
   if (typeof tagline === "string" && tagline) {
     try {
       const decoded = JSON.parse(tagline);
       if (decoded && typeof decoded === "object") {
+        const layers = decoded.Symbol?.Layers;
+        if (Array.isArray(layers)) {
+          layers.forEach((layer) => collectSymbolFromValue(layer));
+        } else if (typeof layers === "string") {
+          collectSymbolFromValue(layers);
+        }
+        collectSymbolFromValue(JSON.stringify(decoded));
         tagline = decoded.Tagline || decoded.tagline || tagline;
       }
     } catch (_) {
       // Keep the original string when tagline is not JSON.
+      collectSymbolFromValue(tagline);
     }
   }
+
+  symbolLayers = [...new Set(symbolLayers)];
 
   return {
     guildID: payload.guildID || payload.id || id,
@@ -350,6 +393,11 @@ async function getGuildNormalized(guildID, options = {}) {
     chatEnabled:
       payload.chatEnabled === undefined ? null : Boolean(payload.chatEnabled),
     country: payload.country || payload.countryCode || null,
+    symbol: {
+      shield: symbolShield,
+      icon: symbolIcon,
+      layers: symbolLayers,
+    },
   };
 }
 
@@ -797,7 +845,11 @@ async function tryNkCompatibility(path) {
   }
 
   if (endpoint === "guild.php") {
-    const guild = await getGuildNormalized(params.get("id") || "", options);
+    const skipOwnerLookup = params.get("lite") === "1";
+    const guild = await getGuildNormalized(params.get("id") || "", {
+      ...options,
+      skipOwnerLookup,
+    });
     return {
       success: true,
       cached: false,
