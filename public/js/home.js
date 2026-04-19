@@ -50,6 +50,7 @@
   };
   const WEEKLY_ARENA_ADVANCE_MS = 2 * 60 * 60 * 1000;
   const WEEKLY_ARENA_START_LABEL = "Wed.";
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
   const SCHEDULE_BY_MODE = {
     speedwithfirezomg: [
@@ -158,9 +159,46 @@
       remainingMs > 0 &&
       remainingMs <= WEEKLY_ARENA_ADVANCE_MS;
 
+    const getHighlightDayFromRemaining = (remaining) => {
+      const value = Number(remaining);
+      if (!Number.isFinite(value)) {
+        return null;
+      }
+
+      const normalized = ((value % WEEK_MS) + WEEK_MS) % WEEK_MS;
+      const d2h = WEEK_MS - WEEKLY_ARENA_ADVANCE_MS; // 6d 2h
+
+      if (normalized <= WEEKLY_ARENA_ADVANCE_MS || normalized > d2h) {
+        return "Wed.";
+      }
+      if (normalized > 5 * DAY_MS + 2 * 60 * 60 * 1000) {
+        return "Thur.";
+      }
+      if (normalized > 4 * DAY_MS + 2 * 60 * 60 * 1000) {
+        return "Fri.";
+      }
+      if (normalized > 3 * DAY_MS + 2 * 60 * 60 * 1000) {
+        return "Sat.";
+      }
+      if (normalized > 2 * DAY_MS + 2 * 60 * 60 * 1000) {
+        return "Sun.";
+      }
+      if (normalized > DAY_MS + 2 * 60 * 60 * 1000) {
+        return "Mon.";
+      }
+      return "Tue.";
+    };
+
+    const highlightDay =
+      week === baselineWeekNumber
+        ? shouldAdvanceEarly
+          ? WEEKLY_ARENA_START_LABEL
+          : getHighlightDayFromRemaining(remainingMs)
+        : null;
+
     return {
       weekNumber: shouldAdvanceEarly ? week + 1 : week,
-      highlightDay: shouldAdvanceEarly ? WEEKLY_ARENA_START_LABEL : null,
+      highlightDay,
       currentWeekEnd,
     };
   };

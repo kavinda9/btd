@@ -369,7 +369,10 @@ async function hydrateFailedClanRows() {
 
 async function loadClanLeaderboard(forceRefresh = false) {
   clanLeaderboardError.hidden = true;
-  clanLeaderboardMeta.textContent = "Loading...";
+  if (clanLeaderboardMeta) {
+    clanLeaderboardMeta.textContent = "";
+    clanLeaderboardMeta.hidden = true;
+  }
 
   const selectedType =
     clanTypeSelect && clanTypeSelect.value
@@ -406,7 +409,10 @@ async function loadClanLeaderboard(forceRefresh = false) {
       await hydrateFailedClanRows();
     }
 
-    clanLeaderboardMeta.textContent = `Type: ${String(data.type || selectedType).toUpperCase()} | Entries: ${formatNumber(data.count)} | Cached: ${data.cached ? "Yes" : "No"}`;
+    if (clanLeaderboardMeta) {
+      clanLeaderboardMeta.textContent = "";
+      clanLeaderboardMeta.hidden = true;
+    }
 
     const url = new URL(window.location.href);
     url.searchParams.set("type", selectedType);
@@ -414,7 +420,10 @@ async function loadClanLeaderboard(forceRefresh = false) {
   } catch (error) {
     clanLeaderboardBody.innerHTML =
       "<tr><td colspan='3'>Failed to load clan leaderboard.</td></tr>";
-    clanLeaderboardMeta.textContent = "";
+    if (clanLeaderboardMeta) {
+      clanLeaderboardMeta.textContent = "";
+      clanLeaderboardMeta.hidden = true;
+    }
     clanLeaderboardError.textContent = error.message;
     clanLeaderboardError.hidden = false;
   }

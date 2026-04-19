@@ -7,8 +7,51 @@ const pastInfoCard = document.getElementById("pastInfoCard");
 const pastMeta = document.getElementById("pastMeta");
 const pastError = document.getElementById("pastError");
 const pastBody = document.getElementById("pastBody");
+const pastWeekInfo = document.getElementById("pastWeekInfo");
 const pastGuildDetailCache = new Map();
 const pastGuildDetailPending = new Map();
+
+const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const LIVE_WEEK_NUMBER = 569;
+const WEEKLY_NEW_MODE_ROTATION = [
+  "R3 Speed Bananza ZOMG",
+  "Speed Bananza ZOMG",
+  "Speed Bananza Boosts Only",
+  "Speed With Fire ZOMG",
+];
+const WEEKLY_OLD_MODE_ROTATION = [
+  "Speed With Fire Cards",
+  "Speed With Fire",
+  "Speed Bananza",
+  "Speed Mega Boost Cards",
+];
+const OLD_ROTATION_ANCHOR_WEEK = 419;
+const NEW_ROTATION_START_WEEK = 423;
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+const WEEKLY_ARENA_IMAGE_FILES = {
+  r3speedbananzazomg: "4.png",
+  speedbananzazomg: "1.png",
+  speedbananzaboostsonly: "2.png",
+  speedwithfirezomg: "5.png",
+  speedwithfirecards: "3.png",
+  speedwithfire: "5.png",
+  speedbananza: "1.png",
+  speedmegaboostcards: "6.png",
+};
 
 function removePastClanTableHeader() {
   const table = pastBody ? pastBody.closest("table") : null;
@@ -49,6 +92,111 @@ const CLAN_ICON_FILE_BY_NUMBER = {
   24: "Icon_24_Bombs.png",
   25: "Icon_25_Sniper.png",
 };
+
+function pad2(value) {
+  return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
+}
+
+function normalizeModeName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function getNextWeeklyResetTime() {
+  const now = Date.now();
+  const cycles = Math.ceil((now - WEEKLY_RESET_BASE) / WEEK_MS);
+  return new Date(WEEKLY_RESET_BASE + cycles * WEEK_MS);
+}
+
+function getWeeklyModeName(weekNumber) {
+  const week = Number(weekNumber);
+  if (!Number.isFinite(week) || week <= 0) {
+    return "";
+  }
+
+  if (week >= NEW_ROTATION_START_WEEK) {
+    const index = (week - 1) % WEEKLY_NEW_MODE_ROTATION.length;
+    return WEEKLY_NEW_MODE_ROTATION[index] || "";
+  }
+
+  const size = WEEKLY_OLD_MODE_ROTATION.length;
+  const index = (((week - OLD_ROTATION_ANCHOR_WEEK) % size) + size) % size;
+  return WEEKLY_OLD_MODE_ROTATION[index] || "";
+}
+
+function getWeeklyArenaImageFile(weekNumber, weekName) {
+  const resolvedName = weekName || getWeeklyModeName(weekNumber);
+  const key = normalizeModeName(resolvedName);
+  return WEEKLY_ARENA_IMAGE_FILES[key] || "";
+}
+
+function formatWeeklyRange(startDate, endDate) {
+  const startYear = startDate.getUTCFullYear();
+  const endYear = endDate.getUTCFullYear();
+  const startMonthName = MONTH_NAMES[startDate.getUTCMonth()];
+  const endMonthName = MONTH_NAMES[endDate.getUTCMonth()];
+  const startDay = pad2(startDate.getUTCDate());
+  const endDay = pad2(endDate.getUTCDate());
+
+  if (startYear === endYear && startMonthName === endMonthName) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endDay}`;
+  }
+
+  if (startYear === endYear) {
+    return `${startYear} ${startMonthName} ${startDay} - ${endMonthName} ${endDay}`;
+  }
+
+  return `${startYear} ${startMonthName} ${startDay} - ${endYear} ${endMonthName} ${endDay}`;
+}
+
+function getWeekPeriodByNumber(weekNumber) {
+  const week = Number(weekNumber);
+  if (!Number.isFinite(week) || week <= 0) {
+    return null;
+  }
+
+  const currentWeekEnd = getNextWeeklyResetTime();
+  const offsetWeeks = LIVE_WEEK_NUMBER - week;
+  const end = new Date(currentWeekEnd.getTime() - offsetWeeks * WEEK_MS);
+  const start = new Date(end.getTime() - WEEK_MS);
+
+  return { start, end };
+}
+
+function renderWeekInfoCard(weekNumber, weekName) {
+  const period = getWeekPeriodByNumber(weekNumber);
+  const modeName = weekName || getWeeklyModeName(weekNumber) || "-";
+  const range = period ? formatWeeklyRange(period.start, period.end) : "";
+  const imageFile = getWeeklyArenaImageFile(weekNumber, modeName);
+  const imageSrc = imageFile
+    ? `images/arenas/${encodeURIComponent(imageFile)}`
+    : "";
+
+  return `
+    ${
+      imageSrc
+        ? `
+      <span class="week-info-image-wrap">
+        <img class="week-info-image" src="${imageSrc}" alt="${escapeHtml(modeName)} arena" loading="lazy" decoding="async" />
+      </span>
+    `
+        : ""
+    }
+    <span class="week-info-copy">
+      ${range ? `<span class="week-info-date">${escapeHtml(range)}</span>` : ""}
+      <span class="week-info-mode">( ${escapeHtml(modeName)} )</span>
+    </span>
+  `;
+}
+
+function updateWeekInfoText(weekNumber, weekName) {
+  if (!pastWeekInfo) {
+    return;
+  }
+
+  pastWeekInfo.innerHTML = renderWeekInfoCard(weekNumber, weekName);
+}
 
 function rankClass(rank) {
   if (rank === 1) return "rank-pill rank-1";
@@ -342,16 +490,19 @@ async function loadClans(forceRefresh = false) {
   if (pastMeta) {
     pastMeta.textContent = "";
   }
+  updateWeekInfoText(week, "");
 
   try {
     const data = await apiGet(`past_clan_overall.php?${params.toString()}`);
     const clans = data.clans || [];
     renderRows(clans);
     await hydratePastClanDetails(clans);
+    updateWeekInfoText(data.week || week, "");
     if (pastMeta) {
       pastMeta.textContent = "";
     }
   } catch (error) {
+    updateWeekInfoText(week, "");
     if (pastMeta) {
       pastMeta.textContent = "";
     }
@@ -381,6 +532,7 @@ if (weekInput) {
   const initialWeek =
     sanitiseWeek(queryParam("week")) || sanitiseWeek(weekInput.value) || 569;
   weekInput.value = String(initialWeek);
+  updateWeekInfoText(initialWeek, "");
 }
 
 loadClans(false);
