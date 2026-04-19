@@ -869,7 +869,9 @@ function renderBadges(rawProfile, countryValue) {
     const score = featuredIsPrestige ? rawScore / 10 : rawScore;
     const featuredImg = resolveBadgeImagePath(featured.id);
     const featuredAttr = escapeHtml(featured.id);
-    const featuredType = String(featured.type || "").trim().toUpperCase();
+    const featuredType = String(featured.type || "")
+      .trim()
+      .toUpperCase();
     const featuredCount = Number(featured.count) || 0;
     const featuredPrestigeRankRaw =
       Number.isFinite(Number(featured.rank)) && Number(featured.rank) > 0
@@ -906,7 +908,9 @@ function renderBadges(rawProfile, countryValue) {
       const rank = (Number(badge.rank) || 0) + 1;
       const badgeImg = resolveBadgeImagePath(badgeId);
       const badgeAttr = escapeHtml(badgeId);
-      const badgeType = String(badge.type || "").trim().toUpperCase();
+      const badgeType = String(badge.type || "")
+        .trim()
+        .toUpperCase();
       const badgeCount = Number(badge.count) || 0;
       const badgeCountry = String(badge.cc || "").trim();
       const badgePrestigeRankRaw =
