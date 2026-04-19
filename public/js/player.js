@@ -506,6 +506,123 @@ function drawPrestigeRank(ctx, width, height, rankText) {
   ctx.fillText(text, x, y);
 }
 
+function shouldShowBadgeCountOverlay(imgEl) {
+  const badgeType = String(imgEl?.getAttribute("data-badge-type") || "")
+    .trim()
+    .toUpperCase();
+  const isPrestige = imgEl?.getAttribute("data-merge-prestige") === "1";
+  const count = Number(imgEl?.getAttribute("data-badge-count") || 0);
+
+  if (isPrestige) {
+    return false;
+  }
+
+  if (badgeType !== "WORLD" && badgeType !== "REGION") {
+    return false;
+  }
+
+  return Number.isFinite(count) && count > 1;
+}
+
+async function mergeBadgeCountOverlay(baseSrc, countText, options) {
+  const opts = options || {};
+  const fontScale = Number(opts.fontScale) || 1;
+  const text = String(countText || "").trim();
+  if (!baseSrc || !text) {
+    return null;
+  }
+
+  const key = JSON.stringify(["count", baseSrc, text, fontScale]);
+  if (badgeComposeCache.has(key)) {
+    return badgeComposeCache.get(key);
+  }
+
+  const promise = (async () => {
+    const baseImg = await loadBadgeImage(baseSrc);
+    await ensurePrestigeFontLoaded();
+
+    const width = Math.max(1, baseImg.naturalWidth || baseImg.width || 64);
+    const height = Math.max(1, baseImg.naturalHeight || baseImg.height || 64);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return null;
+    }
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(baseImg, 0, 0, width, height);
+
+    const maxWidth = Math.round(width * 0.42);
+    const minFontSize = Math.max(7, Math.round(height * 0.12 * fontScale));
+    let fontSize = Math.max(minFontSize, Math.round(height * 0.24 * fontScale));
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+
+    while (fontSize >= minFontSize) {
+      ctx.font = `${fontSize}px "OETZTYP", sans-serif`;
+      if (ctx.measureText(text).width <= maxWidth) {
+        break;
+      }
+      fontSize -= 1;
+    }
+
+    const x = Math.round(width * 0.95);
+    const y = Math.round(height * 0.88);
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = Math.max(2, Math.round(fontSize * 0.2));
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(text, x, y);
+
+    return canvas.toDataURL("image/png");
+  })();
+
+  badgeComposeCache.set(key, promise);
+  return promise;
+}
+
+async function applyBadgeCountToImage(imgEl) {
+  if (!imgEl || !shouldShowBadgeCountOverlay(imgEl)) {
+    return;
+  }
+
+  const count = Number(imgEl.getAttribute("data-badge-count") || 0);
+  const badgeType = String(imgEl.getAttribute("data-badge-type") || "")
+    .trim()
+    .toUpperCase();
+  const countText = `x${Math.trunc(count)}`;
+  const baseForCount =
+    imgEl.getAttribute("data-count-base-src") ||
+    imgEl.getAttribute("data-base-src") ||
+    imgEl.src;
+
+  if (!baseForCount) {
+    return;
+  }
+
+  const mergedSrc = await mergeBadgeCountOverlay(baseForCount, countText, {
+    fontScale: badgeType === "REGION" ? 1.35 : badgeType === "WORLD" ? 1.1 : 1,
+  });
+  if (mergedSrc) {
+    imgEl.src = mergedSrc;
+  }
+}
+
+function enhanceBadgeCountOverlays() {
+  const imageNodes = document.querySelectorAll(".js-badge-count-image");
+  imageNodes.forEach((node) => {
+    applyBadgeCountToImage(node).catch(() => {
+      // Keep base badge image if count overlay fails.
+    });
+  });
+}
+
 async function mergeBadgeOverlay(baseSrc, overlaySrc, options) {
   const opts = options || {};
   const offsetY = Number(opts.offsetY) || 0;
@@ -685,7 +802,11 @@ async function applyRegionalMergeToImage(imgEl, fallbackCountryValue) {
   );
 
   if (mergedSrc) {
+    imgEl.setAttribute("data-count-base-src", mergedSrc);
     imgEl.src = mergedSrc;
+    applyBadgeCountToImage(imgEl).catch(() => {
+      // Keep merged badge image if count overlay fails.
+    });
     return;
   }
 
@@ -748,6 +869,8 @@ function renderBadges(rawProfile, countryValue) {
     const score = featuredIsPrestige ? rawScore / 10 : rawScore;
     const featuredImg = resolveBadgeImagePath(featured.id);
     const featuredAttr = escapeHtml(featured.id);
+    const featuredType = String(featured.type || "").trim().toUpperCase();
+    const featuredCount = Number(featured.count) || 0;
     const featuredPrestigeRankRaw =
       Number.isFinite(Number(featured.rank)) && Number(featured.rank) > 0
         ? String(Math.trunc(Number(featured.rank)) + 1)
@@ -757,7 +880,7 @@ function renderBadges(rawProfile, countryValue) {
 
     featuredBadgeWrap.innerHTML = `
       <span class="badge" title="${escapeHtml(featured.id)} (Rank: ${formatNumber((Number(featured.rank) || 0) + 1)}, Score: ${formatNumber(score)})">
-        ${featuredImg ? `<img src="${featuredImg}" data-base-src="${featuredImg}" data-badge-id="${featuredAttr}" data-country="${escapeHtml(featuredCountry)}" data-merge-prestige="${featuredIsPrestige ? "1" : "0"}" data-prestige-rank="${escapeHtml(featuredPrestigeRankRaw)}" alt="${escapeHtml(featured.id)}" class="badge-image js-regional-badge-image js-prestige-badge-image" loading="lazy" />` : `<span>${escapeHtml(featured.id)}</span>`}
+        ${featuredImg ? `<img src="${featuredImg}" data-base-src="${featuredImg}" data-count-base-src="${featuredImg}" data-badge-id="${featuredAttr}" data-badge-type="${escapeHtml(featuredType)}" data-badge-count="${escapeHtml(String(featuredCount))}" data-country="${escapeHtml(featuredCountry)}" data-merge-prestige="${featuredIsPrestige ? "1" : "0"}" data-prestige-rank="${escapeHtml(featuredPrestigeRankRaw)}" alt="${escapeHtml(featured.id)}" class="badge-image js-regional-badge-image js-prestige-badge-image js-badge-count-image" loading="lazy" />` : `<span>${escapeHtml(featured.id)}</span>`}
       </span>
     `;
   } else if (featuredBadgeWrap) {
@@ -783,6 +906,8 @@ function renderBadges(rawProfile, countryValue) {
       const rank = (Number(badge.rank) || 0) + 1;
       const badgeImg = resolveBadgeImagePath(badgeId);
       const badgeAttr = escapeHtml(badgeId);
+      const badgeType = String(badge.type || "").trim().toUpperCase();
+      const badgeCount = Number(badge.count) || 0;
       const badgeCountry = String(badge.cc || "").trim();
       const badgePrestigeRankRaw =
         Number.isFinite(Number(badge.rank)) && Number(badge.rank) > 0
@@ -791,13 +916,14 @@ function renderBadges(rawProfile, countryValue) {
 
       return `
         <span class="badge" title="${escapeHtml(badgeId)} (Rank: ${formatNumber(rank)}, Score: ${formatNumber(score)})">
-          ${badgeImg ? `<img src="${badgeImg}" data-base-src="${badgeImg}" data-badge-id="${badgeAttr}" data-country="${escapeHtml(badgeCountry)}" data-merge-prestige="${badgeIsPrestige ? "1" : "0"}" data-prestige-rank="${escapeHtml(badgePrestigeRankRaw)}" alt="${escapeHtml(badgeId)}" class="badge-image js-regional-badge-image js-prestige-badge-image" loading="lazy" />` : `<span>${escapeHtml(badgeId)}</span>`}
+          ${badgeImg ? `<img src="${badgeImg}" data-base-src="${badgeImg}" data-count-base-src="${badgeImg}" data-badge-id="${badgeAttr}" data-badge-type="${escapeHtml(badgeType)}" data-badge-count="${escapeHtml(String(badgeCount))}" data-country="${escapeHtml(badgeCountry)}" data-merge-prestige="${badgeIsPrestige ? "1" : "0"}" data-prestige-rank="${escapeHtml(badgePrestigeRankRaw)}" alt="${escapeHtml(badgeId)}" class="badge-image js-regional-badge-image js-prestige-badge-image js-badge-count-image" loading="lazy" />` : `<span>${escapeHtml(badgeId)}</span>`}
         </span>
       `;
     })
     .join("");
 
   enhancePrestigeBadges();
+  enhanceBadgeCountOverlays();
   enhanceRegionalBadges(countryValue);
 }
 
