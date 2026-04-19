@@ -48,6 +48,8 @@
     speedbananza: "1.png",
     speedmegaboostcards: "6.png",
   };
+  const WEEKLY_ARENA_ADVANCE_MS = 2 * 60 * 60 * 1000;
+  const WEEKLY_ARENA_START_LABEL = "Wed.";
 
   const SCHEDULE_BY_MODE = {
     speedwithfirezomg: [
@@ -147,6 +149,22 @@
     return { start, end };
   };
 
+  const getArenaPresentationWeek = (weekNumber) => {
+    const week = Number(weekNumber);
+    const currentWeekEnd = getNextWeeklyResetTime();
+    const remainingMs = currentWeekEnd.getTime() - Date.now();
+    const shouldAdvanceEarly =
+      week === baselineWeekNumber &&
+      remainingMs > 0 &&
+      remainingMs <= WEEKLY_ARENA_ADVANCE_MS;
+
+    return {
+      weekNumber: shouldAdvanceEarly ? week + 1 : week,
+      highlightDay: shouldAdvanceEarly ? WEEKLY_ARENA_START_LABEL : null,
+      currentWeekEnd,
+    };
+  };
+
   const formatWeekRange = (startDate, endDate) => {
     const startYear = startDate.getUTCFullYear();
     const endYear = endDate.getUTCFullYear();
@@ -166,7 +184,7 @@
     return `${startYear} ${startMonth} ${startDay} - ${endYear} ${endMonth} ${endDay}`;
   };
 
-  const applyScheduleColors = (listEl, weekNumber) => {
+  const applyScheduleColors = (listEl, weekNumber, highlightDay = null) => {
     const lines = Array.from(listEl.querySelectorAll(".arena-line"));
     if (!lines.length) {
       return;
@@ -188,7 +206,7 @@
     };
 
     const dayLookup = ["Sun.", "Mon.", "Tue.", "Wed.", "Thur.", "Fri.", "Sat."];
-    const todayLabel = dayLookup[new Date().getDay()] || "";
+    const todayLabel = highlightDay || dayLookup[new Date().getUTCDay()] || "";
     const isCurrentWeek = weekNumber === baselineWeekNumber;
 
     let useZomgA = true;
@@ -221,7 +239,7 @@
     });
   };
 
-  const renderSchedule = (modeName, weekNumber) => {
+  const renderSchedule = (modeName, weekNumber, highlightDay = null) => {
     const normalized = normalizeModeName(modeName);
     const schedule = SCHEDULE_BY_MODE[normalized] || null;
 
@@ -243,7 +261,7 @@
         : "Current week";
       scheduleEl.innerHTML =
         '<p class="arena-line">Schedule not available for this mode.</p>';
-      applyScheduleColors(scheduleEl, weekNumber);
+      applyScheduleColors(scheduleEl, weekNumber, highlightDay);
       return;
     }
 
@@ -267,7 +285,7 @@
       )
       .join("");
 
-    applyScheduleColors(scheduleEl, weekNumber);
+    applyScheduleColors(scheduleEl, weekNumber, highlightDay);
   };
 
   const renderUnavailable = (message) => {
@@ -331,9 +349,14 @@
   };
 
   const renderSelectedWeek = () => {
+    const presentation = getArenaPresentationWeek(selectedWeekNumber);
     const modeName =
-      getWeeklyModeName(selectedWeekNumber) || baselineModeName || "";
-    renderSchedule(modeName, selectedWeekNumber);
+      getWeeklyModeName(presentation.weekNumber) || baselineModeName || "";
+    renderSchedule(
+      modeName,
+      presentation.weekNumber,
+      presentation.highlightDay,
+    );
     updateWeekNavigationState();
   };
 
