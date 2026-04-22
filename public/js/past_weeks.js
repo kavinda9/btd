@@ -86,7 +86,9 @@ if (weekInput) {
   });
 
   const initialWeek =
-    sanitiseWeek(queryParam("week")) || sanitiseWeek(weekInput.value) || 569;
+    sanitiseWeek(queryParam("week")) ||
+    sanitiseWeek(weekInput.value) ||
+    (typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570);
   weekInput.value = String(initialWeek);
 }
 

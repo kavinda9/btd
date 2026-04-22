@@ -11,7 +11,8 @@ const pastWeeklyCountryPending = new Map();
 
 const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-const LIVE_WEEK_NUMBER = 569;
+const LIVE_WEEK_NUMBER =
+  typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570;
 const WEEKLY_NEW_MODE_ROTATION = [
   "R3 Speed Bananza ZOMG",
   "Speed Bananza ZOMG",
@@ -362,7 +363,9 @@ if (weekInput) {
   });
 
   const initialWeek =
-    sanitiseWeek(queryParam("week")) || sanitiseWeek(weekInput.value) || 569;
+    sanitiseWeek(queryParam("week")) ||
+    sanitiseWeek(weekInput.value) ||
+    LIVE_WEEK_NUMBER;
   weekInput.value = String(initialWeek);
   updateWeekInfoText(initialWeek, "");
 }

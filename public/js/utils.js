@@ -2,10 +2,14 @@ const API_BASE =
   window.BTD_API_BASE ||
   "https://priority-static-api.nkstatic.com/storage/static";
 
-const NK_LIVE_WEEK = 569;
-const NK_LIVE_SEASON = 238;
-const NK_CLAN_WEEKLY_ID = 567;
-const NK_WEEK_TO_SEASON_OFFSET = NK_LIVE_WEEK - NK_LIVE_SEASON;
+const NK_DECLARED_CURRENT_WEEK = 570;
+const NK_SEASON_ANCHOR_WEEK = 569;
+const NK_SEASON_ANCHOR_VALUE = 238;
+const NK_WEEK_TO_SEASON_OFFSET = NK_SEASON_ANCHOR_WEEK - NK_SEASON_ANCHOR_VALUE;
+const NK_WEEK_SECONDS = 7 * 24 * 60 * 60;
+const NK_BIWEEK_SECONDS = 14 * 24 * 60 * 60;
+const NK_WEEKLY_RESET_BASE_UNIX =
+  new Date("2015-12-16T10:00:00+00:00").getTime() / 1000;
 const NK_CACHE_TTL_MS = 60 * 1000;
 
 const nkRequestCache = new Map();
@@ -247,19 +251,31 @@ function formatRangeFromTimestamps(startTimestamp, endTimestamp) {
 }
 
 function getCurrentWeekNumber() {
-  const weeklyResetBase =
-    new Date("2015-12-16T10:00:00+00:00").getTime() / 1000;
   const now = Math.floor(Date.now() / 1000);
-  const weekSeconds = 7 * 24 * 60 * 60;
-  return Math.max(1, Math.ceil((now - weeklyResetBase) / weekSeconds));
+  const calculatedWeek = Math.max(
+    1,
+    Math.ceil((now - NK_WEEKLY_RESET_BASE_UNIX) / NK_WEEK_SECONDS),
+  );
+  return Math.max(NK_DECLARED_CURRENT_WEEK, calculatedWeek);
+}
+
+function getCurrentSeasonNumber(weekNumber = getCurrentWeekNumber()) {
+  return getSeasonNumberFromWeek(weekNumber);
+}
+
+function getSeasonNumberFromWeek(weekNumber) {
+  const week = Number(weekNumber);
+  if (!Number.isFinite(week) || week <= 0) {
+    return 1;
+  }
+
+  const seasonsDelta = Math.floor((week - NK_SEASON_ANCHOR_WEEK) / 2);
+  return Math.max(1, NK_SEASON_ANCHOR_VALUE + seasonsDelta);
 }
 
 function getCurrentWeekStartTimestamp() {
-  const weeklyResetBase =
-    new Date("2015-12-16T10:00:00+00:00").getTime() / 1000;
   const currentWeek = getCurrentWeekNumber();
-  const weekSeconds = 7 * 24 * 60 * 60;
-  return weeklyResetBase + (currentWeek - 1) * weekSeconds;
+  return NK_WEEKLY_RESET_BASE_UNIX + (currentWeek - 1) * NK_WEEK_SECONDS;
 }
 
 function getPrestigeWeekRange(weekNumber) {
@@ -268,12 +284,12 @@ function getPrestigeWeekRange(weekNumber) {
     return "";
   }
 
-  const biWeekSeconds = 14 * 24 * 60 * 60;
-  const currentWeek = getCurrentWeekNumber();
-  const currentWeekStart = getCurrentWeekStartTimestamp();
-  const offsetWeeks = week - currentWeek;
-  const start = currentWeekStart + offsetWeeks * biWeekSeconds;
-  const end = start + biWeekSeconds;
+  const anchorSeasonStart =
+    NK_WEEKLY_RESET_BASE_UNIX + (NK_SEASON_ANCHOR_WEEK - 1) * NK_WEEK_SECONDS;
+  const targetSeason = getSeasonNumberFromWeek(week);
+  const seasonsDelta = targetSeason - NK_SEASON_ANCHOR_VALUE;
+  const start = anchorSeasonStart + seasonsDelta * NK_BIWEEK_SECONDS;
+  const end = start + NK_BIWEEK_SECONDS;
 
   return formatRangeFromTimestamps(start, end);
 }
@@ -404,7 +420,8 @@ async function getGuildNormalized(guildID, options = {}) {
 async function mapLeaderboardWeekly(week, country, options = {}) {
   const countryCode = normalizeCountryCode(country || "");
   const weeklyPath = `appdocs/2/leaderboards/WeeklyMedallions:${week}${countryCode ? `:${countryCode}` : ""}.json`;
-  const prestigePath = `appdocs/2/leaderboards/ladder:Season_${NK_LIVE_SEASON}:Rating.json`;
+  const prestigeSeason = getCurrentSeasonNumber(week);
+  const prestigePath = `appdocs/2/leaderboards/ladder:Season_${prestigeSeason}:Rating.json`;
 
   const [rawWeekly, rawPrestige] = await Promise.all([
     nkGet(weeklyPath, options),
@@ -555,17 +572,20 @@ async function mapPlayerProfile(playerID, options = {}) {
     null;
   const towers = rawProfile.towers || rawProfile.loadout || null;
 
+  const currentWeek = getCurrentWeekNumber();
+  const currentSeason = getCurrentSeasonNumber(currentWeek);
+
   const weeklyRaw = await nkGetOptional(
-    `appdocs/2/leaderboards/WeeklyMedallions:${NK_LIVE_WEEK}.json`,
+    `appdocs/2/leaderboards/WeeklyMedallions:${currentWeek}.json`,
     options,
   );
   const prestigeRaw = await nkGetOptional(
-    `appdocs/2/leaderboards/ladder:Season_${NK_LIVE_SEASON}:Rating.json`,
+    `appdocs/2/leaderboards/ladder:Season_${currentSeason}:Rating.json`,
     options,
   );
   const clanRaw = clanID
     ? await nkGetOptional(
-        `appdocs/2/leaderboards/guild:compiled:WeeklyMedallions:${NK_CLAN_WEEKLY_ID}:Club.json`,
+        `appdocs/2/leaderboards/guild:compiled:WeeklyMedallions:${currentWeek}:Club.json`,
         options,
       )
     : null;
@@ -642,8 +662,8 @@ async function mapClanLeaderboard(type, options = {}) {
 
   const path =
     normalizedType === "overall"
-      ? `appdocs/2/leaderboards/guild:compiled:WeeklyMedallions:${NK_LIVE_WEEK}.json`
-      : `appdocs/2/leaderboards/guild:compiled:WeeklyMedallions:${NK_CLAN_WEEKLY_ID}:${typeSuffix}.json`;
+      ? `appdocs/2/leaderboards/guild:compiled:WeeklyMedallions:${getCurrentWeekNumber()}.json`
+      : `appdocs/2/leaderboards/guild:compiled:WeeklyMedallions:${getCurrentWeekNumber()}:${typeSuffix}.json`;
 
   const parsed = parseNkEntries(await nkGet(path, options));
   const clans = [];
@@ -710,7 +730,7 @@ async function mapPastWeekly(week, options = {}) {
 }
 
 async function mapPastPrestige(week, options = {}) {
-  const season = week - NK_WEEK_TO_SEASON_OFFSET;
+  const season = getSeasonNumberFromWeek(week);
   if (season <= 0) {
     throw new Error("Week is too old to derive a valid prestige season.");
   }
@@ -784,7 +804,7 @@ async function mapPastClanOverall(week, options = {}) {
 }
 
 async function mapPastCombined(week, options = {}) {
-  const season = week - NK_WEEK_TO_SEASON_OFFSET;
+  const season = getSeasonNumberFromWeek(week);
   if (season <= 0) {
     throw new Error("Week is too old to derive a valid prestige season.");
   }
@@ -833,11 +853,11 @@ async function tryNkCompatibility(path) {
 
   if (endpoint === "leaderboard.php") {
     const country = params.get("country") || "";
-    return mapLeaderboardWeekly(NK_LIVE_WEEK, country, options);
+    return mapLeaderboardWeekly(getCurrentWeekNumber(), country, options);
   }
 
   if (endpoint === "prestige_leaderboard.php") {
-    return mapPrestigeLeaderboard(NK_LIVE_SEASON, options);
+    return mapPrestigeLeaderboard(getCurrentSeasonNumber(), options);
   }
 
   if (endpoint === "player.php") {

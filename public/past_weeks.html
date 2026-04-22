@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-HT099D5F9Q"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-HT099D5F9Q");
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -54,7 +68,7 @@
             type="number"
             min="1"
             step="1"
-            value="569"
+            value="570"
             aria-label="Week number"
           />
           <button class="btn btn-primary" id="loadWeekBtn" type="button">
@@ -65,26 +79,26 @@
 
       <section class="card reveal">
         <p class="muted" id="pastWeekMeta">
-          Choose what to open for week <span id="selectedWeekText">569</span>.
+          Choose what to open for week <span id="selectedWeekText">570</span>.
         </p>
         <p class="error" id="pastWeekError" hidden></p>
         <div class="hero-actions">
           <a
             class="btn btn-ghost"
             id="openPastWeekly"
-            href="past_weekly.html?week=569"
+            href="past_weekly.html?week=570"
             >Past Weekly Leaderboard</a
           >
           <a
             class="btn btn-ghost"
             id="openPastPrestige"
-            href="past_prestige.html?week=569"
+            href="past_prestige.html?week=570"
             >Past Prestige Leaderboard</a
           >
           <a
             class="btn btn-ghost"
             id="openPastClans"
-            href="past_clan_overall.html?v=20260419c&week=569"
+            href="past_clan_overall.html?v=20260419c&week=570"
             >Past Clan Overall</a
           >
         </div>
@@ -96,8 +110,8 @@
     </footer>
 
     <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
+    <script src="js/utils.js?v=20260422b"></script>
     <script src="js/main.js?v=20260419s"></script>
-    <script src="js/past_weeks.js?v=20260417a"></script>
+    <script src="js/past_weeks.js?v=20260422a"></script>
   </body>
 </html>

@@ -446,6 +446,10 @@ function isPrestigeBadgeId(badgeId) {
   return normalizeAssetKey(badgeId).endsWith("prestige");
 }
 
+function isBlackDiamondPrestigeBadgeId(badgeId) {
+  return normalizeAssetKey(badgeId) === "blackdiamondprestige";
+}
+
 function loadBadgeImage(src) {
   if (!src) {
     return Promise.reject(new Error("Missing image source"));
@@ -865,6 +869,9 @@ function renderBadges(rawProfile, countryValue) {
 
   if (featured && featured.id && featuredBadgeWrap) {
     const featuredIsPrestige = isPrestigeBadgeId(featured.id);
+    const featuredIsBlackDiamondPrestige = isBlackDiamondPrestigeBadgeId(
+      featured.id,
+    );
     const rawScore = Number(featured.score) || 0;
     const score = featuredIsPrestige ? rawScore / 10 : rawScore;
     const featuredImg = resolveBadgeImagePath(featured.id);
@@ -873,15 +880,19 @@ function renderBadges(rawProfile, countryValue) {
       .trim()
       .toUpperCase();
     const featuredCount = Number(featured.count) || 0;
+    const featuredRankValue = Number(featured.rank);
+    const featuredDisplayRank = Number.isFinite(featuredRankValue)
+      ? Math.trunc(featuredRankValue) + 1
+      : featuredIsBlackDiamondPrestige
+        ? 1
+        : 0;
     const featuredPrestigeRankRaw =
-      Number.isFinite(Number(featured.rank)) && Number(featured.rank) > 0
-        ? String(Math.trunc(Number(featured.rank)) + 1)
-        : "";
+      featuredDisplayRank > 0 ? String(featuredDisplayRank) : "";
 
     const featuredCountry = String(featured.cc || "").trim();
 
     featuredBadgeWrap.innerHTML = `
-      <span class="badge" title="${escapeHtml(featured.id)} (Rank: ${formatNumber((Number(featured.rank) || 0) + 1)}, Score: ${formatNumber(score)})">
+      <span class="badge" title="${escapeHtml(featured.id)} (Rank: ${formatNumber(featuredDisplayRank)}, Score: ${formatNumber(score)})">
         ${featuredImg ? `<img src="${featuredImg}" data-base-src="${featuredImg}" data-count-base-src="${featuredImg}" data-badge-id="${featuredAttr}" data-badge-type="${escapeHtml(featuredType)}" data-badge-count="${escapeHtml(String(featuredCount))}" data-country="${escapeHtml(featuredCountry)}" data-merge-prestige="${featuredIsPrestige ? "1" : "0"}" data-prestige-rank="${escapeHtml(featuredPrestigeRankRaw)}" alt="${escapeHtml(featured.id)}" class="badge-image js-regional-badge-image js-prestige-badge-image js-badge-count-image" loading="lazy" />` : `<span>${escapeHtml(featured.id)}</span>`}
       </span>
     `;
@@ -903,9 +914,16 @@ function renderBadges(rawProfile, countryValue) {
     .map((badge) => {
       const badgeId = String(badge.id || "");
       const badgeIsPrestige = isPrestigeBadgeId(badgeId);
+      const badgeIsBlackDiamondPrestige =
+        isBlackDiamondPrestigeBadgeId(badgeId);
       const rawScore = Number(badge.score) || 0;
       const score = badgeIsPrestige ? rawScore / 10 : rawScore;
-      const rank = (Number(badge.rank) || 0) + 1;
+      const badgeRankValue = Number(badge.rank);
+      const rank = Number.isFinite(badgeRankValue)
+        ? Math.trunc(badgeRankValue) + 1
+        : badgeIsBlackDiamondPrestige
+          ? 1
+          : 0;
       const badgeImg = resolveBadgeImagePath(badgeId);
       const badgeAttr = escapeHtml(badgeId);
       const badgeType = String(badge.type || "")
@@ -913,10 +931,7 @@ function renderBadges(rawProfile, countryValue) {
         .toUpperCase();
       const badgeCount = Number(badge.count) || 0;
       const badgeCountry = String(badge.cc || "").trim();
-      const badgePrestigeRankRaw =
-        Number.isFinite(Number(badge.rank)) && Number(badge.rank) > 0
-          ? String(Math.trunc(Number(badge.rank)) + 1)
-          : "";
+      const badgePrestigeRankRaw = rank > 0 ? String(rank) : "";
 
       return `
         <span class="badge" title="${escapeHtml(badgeId)} (Rank: ${formatNumber(rank)}, Score: ${formatNumber(score)})">
