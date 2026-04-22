@@ -10,7 +10,6 @@ const pastBody = document.getElementById("pastBody");
 const WEEK_SECONDS = 7 * 24 * 60 * 60;
 const BIWEEK_SECONDS = 14 * 24 * 60 * 60;
 const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
-const PRESTIGE_RESET_BASE = Date.UTC(2017, 1, 15, 10, 0, 0);
 const MONTH_NAMES = [
   "January",
   "February",
@@ -25,26 +24,17 @@ const MONTH_NAMES = [
   "November",
   "December",
 ];
+const LIVE_WEEK_NUMBER =
+  typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570;
 
-function getCurrentWeekNumber() {
-  return Math.max(
-    1,
-    Math.ceil((Date.now() - WEEKLY_RESET_BASE) / (WEEK_SECONDS * 1000)),
-  );
-}
-
-function getNextPrestigeResetTime() {
+function getNextWeeklyResetTime() {
   const now = Date.now();
-  const cycles = Math.ceil(
-    (now - PRESTIGE_RESET_BASE) / (BIWEEK_SECONDS * 1000),
-  );
-  return new Date(PRESTIGE_RESET_BASE + cycles * BIWEEK_SECONDS * 1000);
+  const cycles = Math.ceil((now - WEEKLY_RESET_BASE) / (WEEK_SECONDS * 1000));
+  return new Date(WEEKLY_RESET_BASE + cycles * WEEK_SECONDS * 1000);
 }
 
-function getCurrentWeekStart() {
-  return new Date(
-    WEEKLY_RESET_BASE + (getCurrentWeekNumber() - 1) * WEEK_SECONDS * 1000,
-  );
+function padDay(value) {
+  return String(Math.max(0, Number(value) || 0)).padStart(2, "0");
 }
 
 function formatPrestigeRange(startDate, endDate) {
@@ -52,8 +42,8 @@ function formatPrestigeRange(startDate, endDate) {
   const endYear = endDate.getUTCFullYear();
   const startMonthName = MONTH_NAMES[startDate.getUTCMonth()];
   const endMonthName = MONTH_NAMES[endDate.getUTCMonth()];
-  const startDay = pad2(startDate.getUTCDate());
-  const endDay = pad2(endDate.getUTCDate());
+  const startDay = padDay(startDate.getUTCDate());
+  const endDay = padDay(endDate.getUTCDate());
 
   if (startYear === endYear && startMonthName === endMonthName) {
     return `${startYear} ${startMonthName} ${startDay} - ${endDay}`;
@@ -72,11 +62,11 @@ function getPrestigePeriodByNumber(weekNumber) {
     return null;
   }
 
-  const currentWeekNumber = getCurrentWeekNumber();
-  const currentWeekStart = getCurrentWeekStart();
-  const offsetWeeks = week - currentWeekNumber;
+  const currentWeekEnd = getNextWeeklyResetTime();
+  const offsetWeeks = LIVE_WEEK_NUMBER - week;
+  // Prestige window starts one weekly cycle before the selected week's weekly window.
   const start = new Date(
-    currentWeekStart.getTime() + offsetWeeks * BIWEEK_SECONDS * 1000,
+    currentWeekEnd.getTime() - (offsetWeeks + 2) * WEEK_SECONDS * 1000,
   );
   const end = new Date(start.getTime() + BIWEEK_SECONDS * 1000);
 
@@ -86,6 +76,15 @@ function getPrestigePeriodByNumber(weekNumber) {
 function getPrestigeWeekLabel(weekNumber) {
   const period = getPrestigePeriodByNumber(weekNumber);
   return period ? formatPrestigeRange(period.start, period.end) : "";
+}
+
+function getPrestigeMetaText(weekNumber) {
+  const range = getPrestigeWeekLabel(weekNumber);
+  if (!range) {
+    return "";
+  }
+
+  return `${range} prestige leaderboard show for week ${formatNumber(weekNumber)}.`;
 }
 
 function rankClass(rank) {
@@ -132,6 +131,15 @@ function sanitiseWeek(value) {
     return null;
   }
   return week;
+}
+
+function resolvePrestigeWeek(week) {
+  const value = Number(week);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return value % 2 === 0 ? value : value - 1;
 }
 
 function updateWeekQuery(week) {
@@ -197,11 +205,27 @@ function renderRows(players) {
 async function loadPrestige(forceRefresh = false) {
   pastError.hidden = true;
 
-  const week = sanitiseWeek(weekInput?.value);
-  if (!week) {
+  const requestedWeek = sanitiseWeek(weekInput?.value);
+  if (!requestedWeek) {
     pastError.textContent = "Please enter a valid week number.";
     pastError.hidden = false;
     return;
+  }
+
+  const week = resolvePrestigeWeek(requestedWeek);
+  if (!week) {
+    pastError.textContent = "Please enter a valid prestige week number.";
+    pastError.hidden = false;
+    return;
+  }
+
+  if (requestedWeek !== week) {
+    const resolvedDate = getPrestigeWeekLabel(week);
+    const baseMessage = `Prestige leaderboard is available only for even weeks. Showing week ${formatNumber(week)}.`;
+    pastError.textContent = resolvedDate
+      ? `${baseMessage} Date: ${resolvedDate}.`
+      : baseMessage;
+    pastError.hidden = false;
   }
 
   weekInput.value = String(week);
@@ -216,9 +240,10 @@ async function loadPrestige(forceRefresh = false) {
   try {
     const data = await apiGet(`past_prestige.php?${params.toString()}`);
     renderRows(data.players || []);
-    updatePastMeta(week, data.weekRange || getPrestigeWeekLabel(week));
+    const resolvedMeta = getPrestigeMetaText(week) || data.weekRange || "";
+    updatePastMeta(week, resolvedMeta);
   } catch (error) {
-    updatePastMeta(week, getPrestigeWeekLabel(week));
+    updatePastMeta(week, getPrestigeMetaText(week));
     pastError.textContent = error.message;
     pastError.hidden = false;
     pastBody.innerHTML =

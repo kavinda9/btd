@@ -167,27 +167,40 @@
       }
 
       const normalized = ((value % WEEK_MS) + WEEK_MS) % WEEK_MS;
-      const d2h = WEEK_MS - WEEKLY_ARENA_ADVANCE_MS; // 6d 2h
+      const elapsed = (WEEK_MS - normalized) % WEEK_MS;
+      const HOUR_MS = 60 * 60 * 1000;
+      const WED_WINDOW_MS = 22 * HOUR_MS;
+      const THUR_END_MS = 48 * HOUR_MS;
+      const FRI_END_MS = 72 * HOUR_MS;
+      const SAT_END_MS = 96 * HOUR_MS;
+      const SUN_END_MS = 120 * HOUR_MS;
+      const MON_END_MS = 144 * HOUR_MS;
+      const TUE_END_MS = 6 * DAY_MS + 22 * HOUR_MS;
 
-      if (normalized <= WEEKLY_ARENA_ADVANCE_MS || normalized > d2h) {
+      // Wed: 0d0h-0d22h and 6d22h-7d windows.
+      if (elapsed < WED_WINDOW_MS || elapsed >= TUE_END_MS) {
         return "Wed.";
       }
-      if (normalized > 5 * DAY_MS + 2 * 60 * 60 * 1000) {
+      // Thur: 0d22h-1d24h.
+      if (elapsed < THUR_END_MS) {
         return "Thur.";
       }
-      if (normalized > 4 * DAY_MS + 2 * 60 * 60 * 1000) {
+      if (elapsed < FRI_END_MS) {
         return "Fri.";
       }
-      if (normalized > 3 * DAY_MS + 2 * 60 * 60 * 1000) {
+      if (elapsed < SAT_END_MS) {
         return "Sat.";
       }
-      if (normalized > 2 * DAY_MS + 2 * 60 * 60 * 1000) {
+      if (elapsed < SUN_END_MS) {
         return "Sun.";
       }
-      if (normalized > DAY_MS + 2 * 60 * 60 * 1000) {
+      if (elapsed < MON_END_MS) {
         return "Mon.";
       }
-      return "Tue.";
+      if (elapsed < TUE_END_MS) {
+        return "Tue.";
+      }
+      return "Wed.";
     };
 
     const highlightDay =
@@ -418,8 +431,14 @@
   (async () => {
     try {
       const data = await apiGet("leaderboard.php");
-      const weekNumber = Number(data.weekNumber);
-      const modeName = data.weekName || getWeeklyModeName(weekNumber) || "";
+      const apiWeekNumber = Number(data.weekNumber);
+      const weekNumber = Number.isFinite(apiWeekNumber)
+        ? Math.max(LIVE_WEEK_NUMBER, apiWeekNumber)
+        : LIVE_WEEK_NUMBER;
+      const modeName =
+        weekNumber === apiWeekNumber
+          ? data.weekName || getWeeklyModeName(weekNumber) || ""
+          : getWeeklyModeName(weekNumber) || data.weekName || "";
       baselineWeekNumber = weekNumber;
       selectedWeekNumber = weekNumber;
       baselineModeName = modeName;

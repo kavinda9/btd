@@ -28,6 +28,15 @@ function sanitiseWeek(value) {
   return week;
 }
 
+function resolvePrestigeWeek(week) {
+  const value = Number(week);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return value % 2 === 0 ? value : value - 1;
+}
+
 function updateWeekQuery(week) {
   const url = new URL(window.location.href);
   url.searchParams.set("week", String(week));
@@ -54,7 +63,8 @@ function applyWeekTargets() {
     openPastWeekly.href = `past_weekly.html?week=${encodeURIComponent(week)}`;
   }
   if (openPastPrestige) {
-    openPastPrestige.href = `past_prestige.html?week=${encodeURIComponent(week)}`;
+    const prestigeWeek = resolvePrestigeWeek(week) || week;
+    openPastPrestige.href = `past_prestige.html?week=${encodeURIComponent(prestigeWeek)}`;
   }
   if (openPastClans) {
     openPastClans.href = `past_clan_overall.html?v=20260419c&week=${encodeURIComponent(week)}`;
@@ -85,10 +95,13 @@ if (weekInput) {
     }
   });
 
-  const initialWeek =
+  const liveWeek =
+    typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570;
+  const requestedWeek =
     sanitiseWeek(queryParam("week")) ||
     sanitiseWeek(weekInput.value) ||
-    (typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570);
+    liveWeek;
+  const initialWeek = Math.max(liveWeek, requestedWeek);
   weekInput.value = String(initialWeek);
 }
 
