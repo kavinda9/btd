@@ -95,8 +95,7 @@ if (weekInput) {
     }
   });
 
-  const liveWeek =
-    typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570;
+  const liveWeek = getCurrentWeekNumber();
   const requestedWeek =
     sanitiseWeek(queryParam("week")) ||
     sanitiseWeek(weekInput.value) ||
