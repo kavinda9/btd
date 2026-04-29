@@ -24,9 +24,6 @@ const MONTH_NAMES = [
   "November",
   "December",
 ];
-const LIVE_WEEK_NUMBER =
-  typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570;
-
 function getNextWeeklyResetTime() {
   const now = Date.now();
   const cycles = Math.ceil((now - WEEKLY_RESET_BASE) / (WEEK_SECONDS * 1000));
@@ -63,7 +60,7 @@ function getPrestigePeriodByNumber(weekNumber) {
   }
 
   const currentWeekEnd = getNextWeeklyResetTime();
-  const offsetWeeks = LIVE_WEEK_NUMBER - week;
+  const offsetWeeks = getCurrentWeekNumber() - week;
   // Prestige window starts one weekly cycle before the selected week's weekly window.
   const start = new Date(
     currentWeekEnd.getTime() - (offsetWeeks + 2) * WEEK_SECONDS * 1000,
