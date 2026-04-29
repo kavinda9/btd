@@ -23,8 +23,6 @@
   const NEW_ROTATION_START_WEEK = 423;
   const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
   const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-  const LIVE_WEEK_NUMBER =
-    typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570;
   const MONTH_NAMES = [
     "January",
     "February",
@@ -145,7 +143,7 @@
       return null;
     }
 
-    const offsetWeeks = LIVE_WEEK_NUMBER - week;
+    const offsetWeeks = getCurrentWeekNumber() - week;
     const end = new Date(currentWeekEnd.getTime() - offsetWeeks * WEEK_MS);
     const start = new Date(end.getTime() - WEEK_MS);
     return { start, end };
@@ -350,8 +348,8 @@
     applyScheduleColors(scheduleEl, baselineWeekNumber);
   };
 
-  let baselineWeekNumber = LIVE_WEEK_NUMBER;
-  let selectedWeekNumber = LIVE_WEEK_NUMBER;
+  let baselineWeekNumber = getCurrentWeekNumber();
+  let selectedWeekNumber = getCurrentWeekNumber();
   let baselineModeName = "";
 
   const prevWeekBtn = document.getElementById("arenaPrevWeekBtn");
@@ -433,8 +431,8 @@
       const data = await apiGet("leaderboard.php");
       const apiWeekNumber = Number(data.weekNumber);
       const weekNumber = Number.isFinite(apiWeekNumber)
-        ? Math.max(LIVE_WEEK_NUMBER, apiWeekNumber)
-        : LIVE_WEEK_NUMBER;
+        ? Math.max(getCurrentWeekNumber(), apiWeekNumber)
+        : getCurrentWeekNumber();
       const modeName =
         weekNumber === apiWeekNumber
           ? data.weekName || getWeeklyModeName(weekNumber) || ""
