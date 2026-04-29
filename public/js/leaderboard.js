@@ -28,8 +28,6 @@ const WEEKLY_RESET_BASE = new Date("2015-12-16T14:00:00+04:00").getTime();
 const PRESTIGE_RESET_BASE = Date.UTC(2017, 1, 15, 10, 0, 0);
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const BIWEEK_MS = 14 * 24 * 60 * 60 * 1000;
-const LIVE_WEEK_NUMBER =
-  typeof getCurrentWeekNumber === "function" ? getCurrentWeekNumber() : 570;
 const WEEKLY_NEW_MODE_ROTATION = [
   "R3 Speed Bananza ZOMG",
   "Speed Bananza ZOMG",
@@ -282,7 +280,7 @@ function getWeekPeriodByNumber(weekNumber, currentWeekEnd) {
     return null;
   }
 
-  const offsetWeeks = LIVE_WEEK_NUMBER - week;
+  const offsetWeeks = getCurrentWeekNumber() - week;
   const end = new Date(currentWeekEnd.getTime() - offsetWeeks * WEEK_MS);
   const start = new Date(end.getTime() - WEEK_MS);
 
