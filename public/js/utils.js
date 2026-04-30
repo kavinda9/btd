@@ -9,7 +9,7 @@ const NK_WEEK_TO_SEASON_OFFSET = NK_SEASON_ANCHOR_WEEK - NK_SEASON_ANCHOR_VALUE;
 const NK_WEEK_SECONDS = 7 * 24 * 60 * 60;
 const NK_BIWEEK_SECONDS = 14 * 24 * 60 * 60;
 const NK_WEEKLY_RESET_BASE_UNIX =
-  new Date("2015-12-16T10:00:00+00:00").getTime() / 1000;
+  new Date("2015-05-27T00:00:00+00:00").getTime() / 1000;
 const NK_CACHE_TTL_MS = 60 * 1000;
 
 const nkRequestCache = new Map();
@@ -252,11 +252,10 @@ function formatRangeFromTimestamps(startTimestamp, endTimestamp) {
 
 function getCurrentWeekNumber() {
   const now = Math.floor(Date.now() / 1000);
-  const calculatedWeek = Math.max(
+  return Math.max(
     1,
     Math.ceil((now - NK_WEEKLY_RESET_BASE_UNIX) / NK_WEEK_SECONDS),
   );
-  return Math.max(NK_DECLARED_CURRENT_WEEK, calculatedWeek);
 }
 
 function getCurrentSeasonNumber(weekNumber = getCurrentWeekNumber()) {

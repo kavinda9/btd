@@ -96,11 +96,8 @@ if (weekInput) {
   });
 
   const liveWeek = getCurrentWeekNumber();
-  const requestedWeek =
-    sanitiseWeek(queryParam("week")) ||
-    sanitiseWeek(weekInput.value) ||
-    liveWeek;
-  const initialWeek = Math.max(liveWeek, requestedWeek);
+  const requestedWeek = sanitiseWeek(queryParam("week"));
+  const initialWeek = requestedWeek || liveWeek;
   weekInput.value = String(initialWeek);
 }
 
